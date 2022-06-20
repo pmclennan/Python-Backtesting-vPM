@@ -122,7 +122,7 @@ save_time = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
 #History data save/export
 history_data = broker.getHistory() # <----- Gets Data into a DATAFRAME 
 history_data = history_data.replace("", np.nan).dropna().reset_index(drop = True) #Remove empty period at the start
-history_filename_str = "backtesting_history" + save_time + ("_{}-{}_to_{}".format(currency, start_date.date(), end_date.date())) + ".csv" 
+history_filename_str = "bt_history" + save_time + ("_{}-{}_to_{}".format(currency, start_date.date(), end_date.date())) + ".csv" 
 history_filename_path = os.path.join(subfolder, history_filename_str).replace('\\', '/')
 
 history_data.to_csv(history_filename_path, index = False)
@@ -130,20 +130,20 @@ history_data.to_csv(history_filename_path, index = False)
 #Summary data save/export
 summary_data = broker.getSummary()
 summary_data.insert(loc = 3, column = 'Frequency', value = frequency_str)
-summary_filename_str = "backtesting_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+summary_filename_str = "bt_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
 summary_filename_path = os.path.join(subfolder, summary_filename_str).replace('\\', '/')
 
 summary_data.to_csv(summary_filename_path, index = False)
 
 #Weekly summary/breakdown data save/export
 weekly_summary_data = get_weekly_summary(history_data)
-weekly_summary_filename_str = "backtesting_weekly_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+weekly_summary_filename_str = "bt_weekly_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
 weekly_summary_filename_path = os.path.join(subfolder, weekly_summary_filename_str).replace('\\', '/')
 
 weekly_summary_data.to_csv(weekly_summary_filename_path, index = False)
 
 #Image file export preparation
-image_filename_str = "backtesting_plot" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".png"
+image_filename_str = "bt_plot" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".png"
 image_filename_path = os.path.join(subfolder, image_filename_str).replace('\\', '/')
 
 # final_data has FIVE new coloumns
