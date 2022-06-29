@@ -13,6 +13,7 @@ import datetime
 import pytz
 import os
 from WeeklySummary import get_weekly_summary
+from TradeSummary import get_trade_summary
 
 #NB - need to import relevant strategies 
 from trading_strategies import macd_stochastic_crossover
@@ -23,14 +24,14 @@ from trading_strategies import parabolic_SAR
 ## Initial setup
 
 tz = pytz.utc #UTC Timezone
-start_date = datetime.datetime(2021, 12, 31, tzinfo = tz) #Start Date - adjust as necessary
-end_date = datetime.datetime(2022, 5, 31, tzinfo = tz) #End Date - adjust as necessary
-data_filename = "USDCAD_M15__2017-01-02_to_2022-06-06.csv" #Data File - adjust per the relevant file
+start_date = datetime.datetime(2017, 1, 2, tzinfo = tz) #Start Date - adjust as necessary
+end_date = datetime.datetime(2022, 6, 5, tzinfo = tz) #End Date - adjust as necessary
+data_filename = "EURUSD_H1__2017-01-02_to_2022-06-06.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
 frequency_str = data_filename.split("_")[1] #Infer Frequency from Data File
 
 #Set up Data Read - Datasets should be located in directory/Datasets (per the DataPull export)
-data_dir = os.path.join(os.getcwd(), "Datasets")
+data_dir = os.path.join(os.getcwd(), "Datasets", "Successful Pulls")
 data_file = os.path.join(data_dir, data_filename).replace('\\', '/')
 
 #Read data and handle dates
@@ -40,10 +41,12 @@ full_data['time'] = full_data['time'].dt.tz_localize(tz = tz)
 ############# Hyperparameters #############
 input_row_size = 60         # <----- Minimum number of inputs required by YOUR trading strategy
 one_pip = 0.0001            # <----- Indicating the value of 1 pip, i.e. usually 0.0001 for all major fx except for JPY pairs (0.01)
-stop_loss = -10*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
-take_profit = 20*one_pip    # <----- For example. If we holding a buy pisition and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
-broker_cost = 2*one_pip
+stop_loss = -20*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
+take_profit = 40*one_pip    # <----- For example. If we holding a buy position and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
+guaranteed_sl = False       # Whether guaranteed stop loss/take profit is in place -> effects signalHandler.bandpl 
+broker_cost = 2*one_pip     # Total cost flat for entering/exiting trade (ie captured once). Consider using higher value if guaranteed_sl is true - in reality guaranteed SL/TP are expensive
 inputs = deque(maxlen=input_row_size)
+
 ############# BACKTESTING #############
 
 ## IMPORTANT - given the use of 'input rows', need to extend data at the front so the backtest starts accordingly. 
@@ -53,7 +56,7 @@ end_idx =  (full_data.index[full_data['time'] <= end_date][-1]) if (full_data['t
 data = full_data[start_idx_adj:end_idx]
 
 #Instantiate Broker
-broker = signalHandler(stop_loss, take_profit, broker_cost, data, currency, start_date, end_date)
+broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date)
 
 #Some Initialization
 start_time = time.time() 
@@ -74,7 +77,7 @@ for _,row in data.iterrows():
     
     if len(inputs) == input_row_size:
 
-        strategy = parabolic_SAR.pSAR(pd.DataFrame(inputs)) #Change this loaded strategy
+        strategy = parabolic_SAR.pSAR(pd.DataFrame(inputs)) #Change loaded strategy
         signal = strategy.run_pSAR() #And call respective strategy run function
         broker.store_signal(signal, index)
 
@@ -100,6 +103,7 @@ for _,row in data.iterrows():
         else:
             print("Unknown Signal")
             break
+        broker.store_executed_price(bid_price, ask_price, index)
      
     index += 1
     
@@ -119,28 +123,28 @@ os.mkdir(subfolder)
 
 save_time = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
 
-#History data save/export
+#History data save
 history_data = broker.getHistory() # <----- Gets Data into a DATAFRAME 
-history_data = history_data.replace("", np.nan).dropna().reset_index(drop = True) #Remove empty period at the start
+history_data['position'] = history_data['position'].replace("", np.nan) #Remove empty period at the start (no position established yet)
+history_data = history_data.dropna().reset_index(drop = True) #Drop this period
 history_filename_str = "bt_history" + save_time + ("_{}-{}_to_{}".format(currency, start_date.date(), end_date.date())) + ".csv" 
 history_filename_path = os.path.join(subfolder, history_filename_str).replace('\\', '/')
 
-history_data.to_csv(history_filename_path, index = False)
-
-#Summary data save/export
+#Summary data save
 summary_data = broker.getSummary()
 summary_data.insert(loc = 3, column = 'Frequency', value = frequency_str)
 summary_filename_str = "bt_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
 summary_filename_path = os.path.join(subfolder, summary_filename_str).replace('\\', '/')
 
-summary_data.to_csv(summary_filename_path, index = False)
-
-#Weekly summary/breakdown data save/export
-weekly_summary_data = get_weekly_summary(history_data)
+#Weekly summary/breakdown data save
+weekly_summary_data = get_weekly_summary(history_data, frequency_str)
 weekly_summary_filename_str = "bt_weekly_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
 weekly_summary_filename_path = os.path.join(subfolder, weekly_summary_filename_str).replace('\\', '/')
 
-weekly_summary_data.to_csv(weekly_summary_filename_path, index = False)
+#Trade Summary
+trade_summary_data = get_trade_summary(history_data)
+trade_summary_filename_str = "bt_trade_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+trade_summary_filename_path = os.path.join(subfolder, trade_summary_filename_str).replace('\\', '/')
 
 #Image file export preparation
 image_filename_str = "bt_plot" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".png"
@@ -153,8 +157,16 @@ image_filename_path = os.path.join(subfolder, image_filename_str).replace('\\', 
 #   'P/L'           : The profit or loss at the time step, 0 when holding.
 #   'Total profit'  : The total profit up to that timestep. 
 
+visualiser = visualise(history_data)
+
+##Exporting all - saves at very end (to ensure no bugs missed/partial saves)
+history_data.to_csv(history_filename_path, index = False)
+summary_data.to_csv(summary_filename_path, index = False)
+weekly_summary_data.to_csv(weekly_summary_filename_path, index = False)
+trade_summary_data.to_csv(trade_summary_filename_path, index = False)
+visualiser.plotFig(image_filename_path, show_plot = False) #Save plot and not neccesarily show.
+
 print("Backtest Process finalised: \n", summary_data)
 
-############# VISUALISING #############
-visualiser = visualise(history_data)
-visualiser.plotFig(image_filename_path)
+############# Show Plot #############
+#visualiser.plotFig(None, show_plot = True)

@@ -5,12 +5,13 @@ import datetime
 
 class signalHandler:
 
-    def __init__(self,stop_loss, take_profit, broker_cost, data, currency, start_date, end_date):
+    def __init__(self,stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date):
         self.original_stop_loss = stop_loss
         self.original_take_profit = take_profit
         self.broker_cost = broker_cost
         self.stop_loss = stop_loss
         self.take_profit = take_profit
+        self.guaranteed_sl = guaranteed_sl
 
         self.prev_traded_position = 0
         self.prev_traded_price = None
@@ -21,12 +22,18 @@ class signalHandler:
         data['position'] = ''
         data['P/L'] = ''
         data['Total profit'] = ''
+        data['Executed price'] = ''
+        data['Take Profit'] = ''
+        data['Stop Loss'] = ''
         n = len(data)
         self.signal_list = [""]*n
         self.action = [""]*n
         self.position = [""]*n
         self.arr_PL = [""]*n 
         self.arr_total_profit = [""]*n 
+        self.executed_price = [""]*n
+        self.stop_loss_px = [""]*n
+        self.take_profit_px = [""]*n
         self.current_action = ""
         self.data = data
         
@@ -42,10 +49,14 @@ class signalHandler:
     ############### Helpers ###############
     # Floors or ceils PL 
     def bandPL(self,PL):
-        if PL > self.take_profit:
-            PL = self.take_profit
-        elif PL < self.stop_loss:
-            PL = self.stop_loss
+        if self.guaranteed_sl:
+            if PL > self.take_profit:
+                PL = self.take_profit
+            elif PL < self.stop_loss:
+                PL = self.stop_loss
+        else:
+            PL = PL
+        PL -= self.broker_cost
         return PL
 
     # Only called when a trade happens
@@ -98,9 +109,12 @@ class signalHandler:
     def getHistory(self):
         self.data['signal'] = self.signal_list
         self.data['action'] = self.action
+        self.data['position'] = self.position
         self.data['P/L'] = self.arr_PL
         self.data['Total profit'] = self.arr_total_profit
-        self.data['position'] = self.position
+        self.data['Executed price'] = self.executed_price
+        self.data['Stop Loss'] = self.stop_loss_px
+        self.data['Take Profit'] = self.take_profit_px
         return self.data
 
     # Summary of backtest results - called once completed
@@ -121,6 +135,12 @@ class signalHandler:
     # Used to store signal for final summary df
     def store_signal(self, signal, index):
         self.signal_list[index] = signal
+        
+    def store_executed_price(self, bid_price, ask_price, index):
+        if self.current_action == "buy" or self.current_action == "close short":
+            self.executed_price[index] = ask_price
+        elif self.current_action == "short" or self.current_action == "close long":
+            self.executed_price[index] = bid_price
 
     ############### Actions ###############
     def buy(self, bid_price, ask_price, index):
@@ -130,27 +150,30 @@ class signalHandler:
             self.current_action = "buy"
             self.prev_traded_position = 1
             self.prev_traded_price = ask_price #Executed at ask for a buy
+            self.stop_loss_px[index] = self.prev_traded_price + self.stop_loss
+            self.take_profit_px[index] = self.prev_traded_price + self.take_profit
             self.saveStats(PL,index)
 
         elif self.prev_traded_position == 1:
-            # Reciving a stroger buy signal, 
-            # Changing take profit to reflect that
-            # PL = self.prev_traded_position*(current_price - self.prev_traded_price)
-            # if PL > 0:
-            #     self.take_profit *= 1.02 # <----- EDIT Based on how you wish to scale take_profit
-            #     self.stop_loss *= 2
+            # Reciving a stroger buy signal
             self.checkStopConditions(bid_price, ask_price, index)
+            #Recalibrate SL/TP if still short after checking stop - Check Matloob
+            if self.current_action == "buy":
+                self.take_profit += self.original_take_profit
+                self.stop_loss += self.original_take_profit
+                self.stop_loss_px[index] = self.prev_traded_price + self.stop_loss
+                self.take_profit_px[index] = self.prev_traded_price + self.take_profit
 
         elif self.prev_traded_position == -1:
             self.current_action = "close short"
-            PL = (self.prev_traded_position*(ask_price - self.prev_traded_price)) - self.broker_cost #Executed at ask for a buy + flat spread
+            PL = (self.prev_traded_position*(ask_price - self.prev_traded_price)) #Executed at ask for a buy 
             PL = self.bandPL(PL)
             self.closeTrade(PL)
             self.saveStats(PL,index)
 
         else: 
             print("Should not be here")
-            
+           
         return self.total_profit
 
     def sell(self, bid_price, ask_price, index):
@@ -160,17 +183,23 @@ class signalHandler:
             self.current_action = "short"
             self.prev_traded_position = -1
             self.prev_traded_price = bid_price #Executed at bid for a sell
+            self.stop_loss_px[index] = self.prev_traded_price - self.stop_loss
+            self.take_profit_px[index] = self.prev_traded_price - self.take_profit
             self.saveStats(PL,index)
 
         elif self.prev_traded_position == -1:
             # Reciving a stroger sell signal, 
-            # Changing stop loss to reflect that
-            # self.stop_loss *= 0.5 # <----- EDIT Based on how you wish to scale stop_loss
             self.checkStopConditions(bid_price, ask_price ,index)
+            #Likewise for buy, update sl/tp
+            # if self.current_action == "short":
+            #     self.take_profit += self.original_take_profit
+            #     self.stop_loss += self.original_take_profit
+            #     self.stop_loss_px[index] = self.prev_traded_price + self.stop_loss
+            #     self.take_profit_px[index] = self.prev_traded_price + self.take_profit
         
         elif self.prev_traded_position == 1:
             self.current_action = "close long"
-            PL = (self.prev_traded_position*(bid_price - self.prev_traded_price)) - self.broker_cost #Executed at bid for a sell + flat spread
+            PL = (self.prev_traded_position*(bid_price - self.prev_traded_price)) #Executed at bid for a sell + flat spread
             PL = self.bandPL(PL)
             self.closeTrade(PL)
             self.saveStats(PL,index)

@@ -36,7 +36,7 @@ class visualise:
             #else:
             #    print("Unrecognised Action!!")
 
-    def plotFig(self, image_filename_path = None):
+    def plotFig(self, image_filename_path = None, show_plot = True):
         if not self.arr_sell or not self.arr_buy or not self.arr_hold:
             print("Insufficient trades to plot")
         else:
@@ -49,4 +49,5 @@ class visualise:
             plt.plot(x, y, markerfacecolor=self.hold_marker_color,linestyle='None', marker=self.hold_marker, markersize=self.marker_size,markeredgecolor=self.hold_marker_color)
             if image_filename_path != None:
                 plt.savefig(image_filename_path) #Save before plotting
-            plt.show()
+            if show_plot:
+                plt.show()

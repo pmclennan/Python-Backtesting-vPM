@@ -36,6 +36,7 @@ class MT5DataPuller:
             return None
 
         if batch_size == 0:
+            n_full_batches = 1
             ## Trying in one pull if no batch_size defined
 
             print("Pulling Rates Data...")
@@ -50,7 +51,7 @@ class MT5DataPuller:
 
             #Error handling - usually because pull range is too long!
             if ticks_data is None or ticks_data.size == 0 or rates_data is None or rates_data.size == 0:
-                batch_size = 25 #Set to batch size of 25 to resolve for pull range being too long
+                batch_size = 5 #Set to batch size of 5 to resolve for pull range being too long
                 print("Issue with single pull")
             else:
                 print("Pulled in one batch")
@@ -72,7 +73,7 @@ class MT5DataPuller:
                 rates_data_df = pd.DataFrame(rates_data)    
                 ticks_data_df = pd.DataFrame(ticks_data)
 
-                if ticks_data is None or ticks_data.size == 0 or rates_data is None or rates_data == 0: #If batches still don't work
+                if ticks_data is None or ticks_data.size == 0 or rates_data is None or rates_data.size == 0: #If batches still don't work
                     print("Issue with data pull")
 
             else:
@@ -118,7 +119,7 @@ class MT5DataPuller:
             print("\n", n_full_batches+1, "batches pulled.")
         
         #Set time columns as datetime object
-        if n_full_batches == 0:
+        if n_full_batches == 1:
             rates_data_df['time'] = pd.to_datetime(rates_data_df['time'], unit = 's')
             ticks_data_df['time'] = pd.to_datetime(ticks_data_df['time'], unit = 's')   
         
@@ -130,41 +131,25 @@ class MT5DataPuller:
         ticks_data_df = ticks_data_df.replace(0, np.nan).dropna().reset_index(drop = True)
         rates_data_df = rates_data_df.replace(0, np.nan).dropna().reset_index(drop = True)
 
-        #Convert 'time' in ticks to minutes (ie clear seconds component)
-        ticks_minutely_series = ticks_data_df['time'] - pd.to_timedelta(ticks_data_df['time'].dt.second, unit ='s')
-        ticks_data_minutely_df = ticks_data_df
-        ticks_data_minutely_df['time'] = ticks_minutely_series
+        ticks_data_cleaned_df = ticks_data_df.copy()
+        #Floor 10mins if around midnight... noticed missing data around midnight so still works as a decent proxy. 
+        #Also won't make a difference for obvs where  there IS data around midnight.
+        print("Flooring ticks time data")
         
-        #Clear out other occurences at each minute (ie to use first bid/ask value). Iterate in reverse to obtain indices then remove these.
-        #Note: This can be extremely length given the size of long tick data pulls (can be millions if a decent time period)
-        idxs_to_remove = []
-        print("Removing tick data minutely duplicates...")
-        for i in reversed(range(0, len(ticks_data_minutely_df))):
-                
-            if ticks_data_minutely_df['time'].iloc[i] == ticks_data_minutely_df['time'].iloc[i-1]:
-                idxs_to_remove.append(i)
-            
-            if (len(ticks_data_minutely_df) - i) % 1000 == 0:
-                print("\rProgress: {}%".format(round(100 * (len(ticks_data_minutely_df) - i)/len(ticks_data_minutely_df), 2)), end = '\r', flush = True)
-            elif i == 0:
-                print("\r---Progress: 100%---", flush = True)
-        
-        print("Indices Obtained - now cleaning duplicates")
+        ticks_data_cleaned_df['time'].loc[ticks_data_cleaned_df['time'].dt.time <= datetime.time(0, 10, 0)] = ticks_data_cleaned_df['time'].loc[ticks_data_cleaned_df['time'].dt.time <= datetime.time(0, 10, 0)].dt.floor(freq = '10T')
+        ticks_data_cleaned_df['time'] = ticks_data_cleaned_df['time'].dt.floor(freq = '5T')
 
-        #Remove the duplicates - nb also can be lengthy
-        ticks_data_minutely_single_df = ticks_data_minutely_df.drop(idxs_to_remove)
-        
-        print("\nTick data minutely duplicates removed")
+        print("Aligning Ticks data with Rates Data")
 
-        #Finally, merge the dataframes
-        agg_data_df = rates_data_df.merge(ticks_data_minutely_single_df, on = 'time')[['time', 'open', 'high', 'low', 'close', 'bid', 'ask']]
+        agg_data_df = rates_data_df.merge(ticks_data_cleaned_df, how = 'inner', on = 'time').groupby('time').first().reset_index()
         
         #Update as attributes of the main object
         self.rates_data_df = rates_data_df
         self.ticks_data_df = ticks_data_df
-        self.ticks_data_minutely_single_df = ticks_data_minutely_single_df
+        self.ticks_data_cleaned_df = ticks_data_cleaned_df
         self.agg_data_df = agg_data_df
 
+        print("Pull Complete")
         return agg_data_df
 
     #Modification methods
