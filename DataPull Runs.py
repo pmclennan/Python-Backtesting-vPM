@@ -34,10 +34,14 @@ start_date = datetime.datetime(2017, 1, 1, tzinfo = tz)
 end_date = datetime.datetime(2022, 6, 6, tzinfo = tz) 
 
 #interval = mt5.TIMEFRAME_D1
-currency = "USDJPY"
+#currency = "USDJPY"
 
 #PullData(currency, start_date, end_date, interval, freq_dict, 10)    
 
 freq_dict = {mt5.TIMEFRAME_M15: "M15", mt5.TIMEFRAME_D1: "D1", mt5.TIMEFRAME_H1: "H1"}
-for key in freq_dict:
-    PullData(currency, start_date, end_date, key, freq_dict, 10)
+
+currencies = ['USDCAD', 'USDJPY', 'GBPUSD']
+
+for currency in currencies:
+    for key in freq_dict:
+        PullData(currency, start_date, end_date, key, freq_dict, 10)

@@ -48,10 +48,8 @@ orig_dat['time'] = orig_dat['time'].dt.tz_localize(tz = pytz.utc)
 
 run = psar_breakout_labelling(bt_dat, orig_dat)
 
-save_folder = r'C:\\Users\\Patrick\Documents\\UNI - USYD\\2022 - Capstone\\Strategy Research\\My working\\Breakout strategy\\pSAR Mapping'
-save_filename = 'pSAR Mapping' + bt_folder + '.csv'
-save_dir = os.path.join(save_folder, save_filename)
+export_folder = r'C:\\Users\\Patrick\Documents\\UNI - USYD\\2022 - Capstone\\Strategy Research\\My working\\Breakout strategy\\pSAR Mapping'
+export_filename = 'pSAR Mapping' + bt_folder + '.csv'
+export_dir = os.path.join(export_folder, export_filename)
 
-run.to_csv(save_dir, index = False)
-
-print("test1")
+run.to_csv(export_dir, index = False)
