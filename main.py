@@ -26,7 +26,7 @@ from trading_strategies import parabolic_SAR
 tz = pytz.utc #UTC Timezone
 start_date = datetime.datetime(2017, 1, 2, tzinfo = tz) #Start Date - adjust as necessary
 end_date = datetime.datetime(2022, 6, 5, tzinfo = tz) #End Date - adjust as necessary
-data_filename = "EURUSD_H1__2017-01-02_to_2022-06-06.csv" #Data File - adjust per the relevant file
+data_filename = "GBPUSD_M15__2017-01-02_to_2022-06-07.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
 frequency_str = data_filename.split("_")[1] #Infer Frequency from Data File
 
@@ -117,7 +117,7 @@ print("\nTime consumed: {}s".format(round(end_time-start_time,2)))
 
 #Set up for export folders
 parent_dir = os.path.join(os.getcwd(), "backtests")
-child_dir = datetime.datetime.now().strftime("%d%m%y-%H%M%S") + ("_{}-{}_to_{}".format(currency, start_date.date(), end_date.date()))
+child_dir = datetime.datetime.now().strftime("%d%m%y-%H%M%S") + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date()))
 subfolder = os.path.join(parent_dir, child_dir)
 os.mkdir(subfolder)
 
@@ -127,7 +127,7 @@ save_time = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
 history_data = broker.getHistory() # <----- Gets Data into a DATAFRAME 
 history_data['position'] = history_data['position'].replace("", np.nan) #Remove empty period at the start (no position established yet)
 history_data = history_data.dropna().reset_index(drop = True) #Drop this period
-history_filename_str = "bt_history" + save_time + ("_{}-{}_to_{}".format(currency, start_date.date(), end_date.date())) + ".csv" 
+history_filename_str = "bt_history" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
 history_filename_path = os.path.join(subfolder, history_filename_str).replace('\\', '/')
 
 #Summary data save

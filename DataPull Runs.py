@@ -40,8 +40,9 @@ end_date = datetime.datetime(2022, 6, 6, tzinfo = tz)
 
 freq_dict = {mt5.TIMEFRAME_M15: "M15", mt5.TIMEFRAME_D1: "D1", mt5.TIMEFRAME_H1: "H1"}
 
-currencies = ['USDCAD', 'USDJPY', 'GBPUSD']
+currencies = ['AUDUSD']
 
 for currency in currencies:
     for key in freq_dict:
+        print("Pulling", freq_dict[key], "Data for", currency, ".")
         PullData(currency, start_date, end_date, key, freq_dict, 10)

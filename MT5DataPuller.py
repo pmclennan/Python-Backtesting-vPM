@@ -142,6 +142,18 @@ class MT5DataPuller:
         print("Aligning Ticks data with Rates Data")
 
         agg_data_df = rates_data_df.merge(ticks_data_cleaned_df, how = 'inner', on = 'time').groupby('time').first().reset_index()
+
+        
+        print("Replacing Extreme Bid/Ask values with close price")
+        #For now, just use close price if close - bid/ask > 10... not perfect but only a few data points.
+        #I believe this is more effective than just simply removing those data points.
+        
+        idx_ask = agg_data_df.loc[abs(agg_data_df['ask'] - agg_data_df['close']) > 10, 'ask'].index.values
+        agg_data_df['ask'].iloc[idx_ask] = agg_data_df['close'].iloc[idx_ask]
+        idx_bid = agg_data_df.loc[abs(agg_data_df['bid'] - agg_data_df['close']) > 10, 'ask'].index.values
+        agg_data_df['bid'].iloc[idx_bid] = agg_data_df['close'].iloc[idx_bid]
+
+        print(len(idx_ask) + len(idx_bid), "extreme bid/ask values replaced with close price.")
         
         #Update as attributes of the main object
         self.rates_data_df = rates_data_df
