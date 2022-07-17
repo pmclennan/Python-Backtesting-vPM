@@ -123,13 +123,14 @@ class signalHandler:
         self.summary_df['End'] = self.end_date.strftime("%Y-%m-%d %H:%S")
         self.summary_df['Currency Pair'] = [self.currency]
         self.summary_df['Total Trades'] = [self.trades_total]
-        self.summary_df['Total P/L (pips)'] = [self.arr_total_profit[-1]]
+        self.summary_df['Total P/L'] = [self.arr_total_profit[-1]]
+        self.summary_df['Total P/L (pips)'] = [self.arr_total_profit[-1] * 10000]
         self.summary_df['Trades Won (n)'] = [self.trades_won]
-        self.summary_df['Trades Won (%)'] = [(self.trades_won/self.trades_total) * 100]
+        self.summary_df['Trades Won (%)'] = [(self.trades_won/self.trades_total) * 100 if self.trades_total > 0 else 0]
         self.summary_df['Trades Lost (n)'] = [self.trades_lost]
-        self.summary_df['Trades Lost (%)'] = [(self.trades_lost/self.trades_total) * 100]
+        self.summary_df['Trades Lost (%)'] = [(self.trades_lost/self.trades_total) * 100 if self.trades_total > 0 else 0]
         self.summary_df['Trades Tied (n)'] = [self.trades_tied]
-        self.summary_df['Trades Tied (%)'] = [(self.trades_tied/self.trades_total) * 100]
+        self.summary_df['Trades Tied (%)'] = [(self.trades_tied/self.trades_total) * 100 if self.trades_total > 0 else 0]
         return self.summary_df
     
     # Used to store signal for final summary df

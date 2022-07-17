@@ -20,13 +20,14 @@ from trading_strategies import macd_stochastic_crossover
 from trading_strategies import macd_crossover
 from trading_strategies import three_rsp
 from trading_strategies import parabolic_SAR
+from trading_strategies import DonchianChannel_CCI
 
 ## Initial setup
 
 tz = pytz.utc #UTC Timezone
-start_date = datetime.datetime(2017, 1, 2, tzinfo = tz) #Start Date - adjust as necessary
-end_date = datetime.datetime(2022, 6, 5, tzinfo = tz) #End Date - adjust as necessary
-data_filename = "GBPUSD_M15__2017-01-02_to_2022-06-07.csv" #Data File - adjust per the relevant file
+start_date = datetime.datetime(2021, 1, 1, tzinfo = tz) #Start Date - adjust as necessary
+end_date = datetime.datetime(2022, 6, 1, tzinfo = tz) #End Date - adjust as necessary
+data_filename = "EURUSD_H1__2017-01-02_to_2022-06-06.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
 frequency_str = data_filename.split("_")[1] #Infer Frequency from Data File
 
@@ -41,11 +42,15 @@ full_data['time'] = full_data['time'].dt.tz_localize(tz = tz)
 ############# Hyperparameters #############
 input_row_size = 60         # <----- Minimum number of inputs required by YOUR trading strategy
 one_pip = 0.0001            # <----- Indicating the value of 1 pip, i.e. usually 0.0001 for all major fx except for JPY pairs (0.01)
-stop_loss = -20*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
-take_profit = 40*one_pip    # <----- For example. If we holding a buy position and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
+stop_loss = -100*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
+take_profit = 200*one_pip    # <----- For example. If we holding a buy position and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
 guaranteed_sl = False       # Whether guaranteed stop loss/take profit is in place -> effects signalHandler.bandpl 
 broker_cost = 2*one_pip     # Total cost flat for entering/exiting trade (ie captured once). Consider using higher value if guaranteed_sl is true - in reality guaranteed SL/TP are expensive
 inputs = deque(maxlen=input_row_size)
+
+#PSAR MAPPING
+#stop_loss = -2000
+#take_profit = 1000
 
 ############# BACKTESTING #############
 
@@ -77,8 +82,8 @@ for _,row in data.iterrows():
     
     if len(inputs) == input_row_size:
 
-        strategy = parabolic_SAR.pSAR(pd.DataFrame(inputs)) #Change loaded strategy
-        signal = strategy.run_pSAR() #And call respective strategy run function
+        strategy = DonchianChannel_CCI.DC_CCI(pd.DataFrame(inputs), CCI_window = 20, DC_periods = 20) #Change loaded strategy
+        signal = strategy.run_DC_CCI() #And call respective strategy run function
         broker.store_signal(signal, index)
 
         # Current Price

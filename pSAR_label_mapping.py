@@ -39,7 +39,7 @@ def psar_breakout_labelling(bt_data, orig_data):
 #And also change export_folder to where you want the output saved
 
 orig_dir = os.getcwd()
-bt_foldername = "020722-174747_GBPUSD_M15__2017-01-02_to_2022-06-05"
+bt_foldername = "100722-131317_EURUSD_H1__2017-01-02_to_2022-06-05"
 bt_file_dir = os.path.join(orig_dir, "backtests", bt_foldername)
 bt_filename = "bt_history" + bt_foldername + ".csv"
 bt_dat_dir = os.path.join(bt_file_dir, bt_filename)
