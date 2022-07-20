@@ -21,7 +21,11 @@ def PullData(currency, start_date, end_date, interval, freq_dict, batch_size = 0
 
     #Set up file name & export
     parent_dir = os.path.join(os.getcwd(), "Datasets")
-    filename = ("{}_{}__{}_to_{}.csv".format(currency, interval_str, start_date_str, end_date_str))
+
+    if mt5.account_info().server == 'ICMarkets-MT5-2':
+        filename = ("{}_{}__{}_to_{}-P.csv".format(currency, interval_str, start_date_str, end_date_str))
+    else:
+        filename = ("{}_{}__{}_to_{}.csv".format(currency, interval_str, start_date_str, end_date_str))
 
     dataset_filename_path = os.path.join(parent_dir, filename).replace('\\', '/')
 
@@ -30,8 +34,8 @@ def PullData(currency, start_date, end_date, interval, freq_dict, batch_size = 0
 #Examples
 freq_dict = {mt5.TIMEFRAME_M15: "M15", mt5.TIMEFRAME_M5: "M05", mt5.TIMEFRAME_D1: "D1", mt5.TIMEFRAME_H1: "H1"}
 tz = pytz.utc
-start_date = datetime.datetime(2017, 1, 1, tzinfo = tz) 
-end_date = datetime.datetime(2022, 6, 6, tzinfo = tz) 
+start_date = datetime.datetime(2021, 7, 1, tzinfo = tz) 
+end_date = datetime.datetime(2022, 7, 18, tzinfo = tz) 
 
 #interval = mt5.TIMEFRAME_D1
 #currency = "USDJPY"
@@ -40,7 +44,25 @@ end_date = datetime.datetime(2022, 6, 6, tzinfo = tz)
 
 freq_dict = {mt5.TIMEFRAME_M15: "M15", mt5.TIMEFRAME_D1: "D1", mt5.TIMEFRAME_H1: "H1"}
 
-currencies = ['AUDUSD']
+currencies = ['AUDUSD', 'EURUSD', 'GBPUSD']
+
+auth_dir = 'C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\MT5 Auth Details'
+auth_filename = 'PM_ICMarkets_MT5_Live_Auth.txt'
+auth_file = os.path.join(auth_dir, auth_filename)
+
+
+with open(auth_file) as f:
+    lines = f.readlines()
+
+login = int(lines[0].split(": ")[1].split("\n")[0])
+password = lines[1].split(": ")[1]
+
+mt5.initialize()
+mt5_auth = mt5.login(login = login, password = password, server = 'ICMarkets-MT5-2')
+#mt5_auth = mt5.login(login = 50862405, password = 'T9hfhsA2', server = 'ICMarkets-Demo')
+print("Auth Status:", mt5_auth)
+print("Log:", mt5.last_error())
+print("Account/Connection Info:", mt5.account_info()._asdict())
 
 for currency in currencies:
     for key in freq_dict:

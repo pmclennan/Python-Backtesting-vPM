@@ -99,18 +99,25 @@ class MT5DataPuller:
                     batch_rates_pull = mt5.copy_rates_range(self.currency, self.interval,start_dl[i], end_dl[i])
                     batch_rates_pull_df = pd.DataFrame(batch_rates_pull)
                     batch_rates_pull_df['time'] = pd.to_datetime(batch_rates_pull_df['time'], unit = 's')
-                    rates_pulls_list.append(batch_rates_pull_df)
 
                     batch_ticks_pull = mt5.copy_ticks_range(self.currency, start_dl[i], end_dl[i], mt5.COPY_TICKS_ALL)
                     #batch_ticks_pull = mt5.copy_ticks_range(self.currency, start_dl[i], end_dl[i], mt5.COPY_TICKS_INFO)
                     batch_ticks_pull_df = pd.DataFrame(batch_ticks_pull)
                     batch_ticks_pull_df['time'] = pd.to_datetime(batch_ticks_pull_df['time'], unit = 's')
-                    tick_pulls_list.append(batch_ticks_pull_df)
 
                     if batch_rates_pull is None or batch_rates_pull.size == 0:
-                        print("\nIssue with rates pull at batch: ", i)
+                        print("\nIssue with rates pull at batch: ", i, "Start Date:", start_dl[i].date())
                     if batch_ticks_pull is None or batch_ticks_pull.size == 0:
-                        print("\nIssue with ticks pull at batch: ", i)
+                        #Try use copy_ticks_from - issue with ICMarkets live account...
+                        #batch_ticks_pull = mt5.copy_ticks_from(self.currency, start_dl[i], 100000 * batch_size, mt5.COPY_TICKS_ALL)
+                        #batch_ticks_pull_df = pd.DataFrame(batch_ticks_pull)
+                        #batch_ticks_pull_df['time'] = pd.to_datetime(batch_ticks_pull_df['time'], unit = 's')
+
+                        if batch_ticks_pull is None or batch_ticks_pull.size == 0:
+                            print("\nIssue with ticks pull at batch: ", i, "Start Date:", start_dl[i].date())
+                    
+                    rates_pulls_list.append(batch_rates_pull_df)
+                    tick_pulls_list.append(batch_ticks_pull_df)
                     
                 #Concatenate these batch pulls
                 rates_data_df = pd.concat(rates_pulls_list, ignore_index = True)
