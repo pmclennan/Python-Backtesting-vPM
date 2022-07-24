@@ -29,10 +29,10 @@ class DC_CCI:
         
         action = 0
 
-        if self.df['CCI'].iloc[-1] > 150 and self.df['high'].iloc[-1] >= self.df['D_UC'].iloc[-1]:
+        if self.df['CCI'].iloc[-1] > 100 and self.df['high'].iloc[-1] >= self.df['D_UC'].iloc[-1]:
             action = 1
 
-        elif self.df['CCI'].iloc[-1] < -150 and self.df['low'].iloc[-1] <= self.df['D_LC'].iloc[-1]:
+        elif self.df['CCI'].iloc[-1] < -100 and self.df['low'].iloc[-1] <= self.df['D_LC'].iloc[-1]:
             action = -1
 
         return action

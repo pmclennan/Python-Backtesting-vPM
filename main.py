@@ -61,6 +61,10 @@ start_idx_adj = (start_idx - input_row_size + 1) if (start_idx - input_row_size 
 end_idx =  (full_data.index[full_data['time'] <= end_date][-1]) if (full_data['time'].iloc[-1] >= end_date) else full_data.index[-1]
 data = full_data[start_idx_adj:end_idx]
 
+#Adjust the start/end date accordingly to line up with the actual data used - just for file naming purposes
+start_date = data['time'].iloc[start_idx_adj+input_row_size]
+end_date = data['time'].iloc[end_idx-1]
+
 #Instantiate Broker
 broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date)
 
