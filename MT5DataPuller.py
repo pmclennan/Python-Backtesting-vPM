@@ -144,7 +144,7 @@ class MT5DataPuller:
         print("Flooring ticks time data")
         
         ticks_data_cleaned_df['time'].loc[ticks_data_cleaned_df['time'].dt.time <= datetime.time(0, 10, 0)] = ticks_data_cleaned_df['time'].loc[ticks_data_cleaned_df['time'].dt.time <= datetime.time(0, 10, 0)].dt.floor(freq = '10T')
-        ticks_data_cleaned_df['time'] = ticks_data_cleaned_df['time'].dt.floor(freq = '5T')
+        ticks_data_cleaned_df['time'] = ticks_data_cleaned_df['time'].dt.floor(freq = '1T')
 
         print("Aligning Ticks data with Rates Data")
 
