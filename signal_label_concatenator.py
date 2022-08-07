@@ -14,8 +14,8 @@ def signal_combiner(data_prefix, data_dir, export_dir, export_name):
 
     for i in range(len(files)):
         file_dir = os.path.join(data_dir, files[i])
-        limit = file_dir.split("-TP")[0][-2:]
-        data = pd.read_csv(file_dir)
+        limit = file_dir.split("-TP")[0][-2:] #
+        data = pd.read_csv(file_dir) 
         data = data[data.columns[1:]]
         
         if i == 0:
