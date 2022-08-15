@@ -1,4 +1,3 @@
-from unittest import skip
 import pandas as pd
 import os
 
@@ -30,8 +29,8 @@ def signal_combiner(data_prefix, data_dir, export_dir, export_name):
 
 export_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Multi Label\\"
 export_suffix = '_Signals_Combined'
-data_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Multi Label\\Data"
-data_prefix = "EURUSD_M30"
+data_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V2"
+data_prefix = "EURUSD_M1"
 export_name = data_prefix + export_suffix
 
 signal_combiner(data_prefix, data_dir, export_dir, export_name)
