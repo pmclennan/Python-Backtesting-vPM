@@ -45,14 +45,11 @@ def plotCandles(data, start, end, xtick_iter = 8, gridOn = False, minorTicksOn =
         ax.xaxis.set_minor_locator(MultipleLocator(1))
     plt.show()
 
-def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, minorTicksOn = True, vertLineStamp = None):
+def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
     
-    #As above, but adds line for zigzags
-    #NB, requires a dataframe with ZigZag mapping from the function.
-
     dat_plot = data.iloc[start:end].reset_index(drop = True, inplace = False)
     x = np.arange(0, len(dat_plot))
-    plot_tl = [dat_plot['time'].iloc[x].strftime('%d-%b %H:%M') for x in range(0, len(dat_plot))]
+    plot_tl = [str(dat_plot['time'].dt.date.iloc[x]) + " " + str(dat_plot['time'].dt.time.iloc[x]) for x in range(0, len(dat_plot))]
 
     fig, ax = plt.subplots(figsize = (16, 9))
 
@@ -79,14 +76,35 @@ def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, mino
     zigZagX = list(dat_plot[dat_plot['ZigZag Type'] != ''].index.values)
     zigZagY = list(dat_plot['ZigZag Value'][dat_plot['ZigZag Value'] != ''])
     plt.plot(zigZagX, zigZagY)
+    
+    #Extrapolation for visualisation..
+    leftYOut = data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+    leftYIn = data.loc[start:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+    leftXOut = data.loc[:start].loc[data['ZigZag Type'] != ''].index.values[-1]
+    leftXIn = data.loc[start:].loc[data['ZigZag Type'] != ''].index.values[0]
+    dyLeft = (leftYIn-leftYOut)/(leftXIn-leftXOut)
+    leftYExt = (leftYOut + (dyLeft * (start-leftXOut) * leftYOut))
+    
+    rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+    rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+    rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
+    rightXOut = data.loc[end:].loc[data['ZigZag Type'] != ''].index.values[0]
+    dyRight = (rightYOut-rightYIn)/(rightXOut-rightXIn)
+    rightYExt = (rightYIn + (dyRight * (end-rightXIn) * rightYIn))
 
-
+    extLeftX = [0, leftXIn - start]
+    extLeftY = [leftYExt, leftYIn]
+    extRightX = [len(dat_plot) - (end - rightXIn), len(dat_plot)]
+    extRightY = [rightYIn, rightYExt]
+    
+    plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
+    plt.plot(extRightX, extRightY, linestyle = '--', color = 'b')
+    
     plt.xticks(x[::xtick_iter], plot_tl[::xtick_iter], rotation = 45)
     if gridOn:
         plt.grid(which = 'both')
-    if minorTicksOn:
+    if ticksOn:
         ax.xaxis.set_minor_locator(MultipleLocator(1))
-    ax.yaxis.tick_right()
     plt.show()
 
 def plotCandlesWithZigZagABCD(data, start, end, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
@@ -134,6 +152,29 @@ def plotCandlesWithZigZagABCD(data, start, end, xtick_iter = 8, gridOn = False, 
             plt.plot(ABCD_x[i], ABCD_y[i] + 0.0005, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
         elif ABCD_t[i] == 'valley':
             plt.plot(ABCD_x[i], ABCD_y[i] - 0.0005, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
+
+    #Extrapolation for visualisation..
+    leftYOut = data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+    leftYIn = data.loc[start:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+    leftXOut = data.loc[:start].loc[data['ZigZag Type'] != ''].index.values[-1]
+    leftXIn = data.loc[start:].loc[data['ZigZag Type'] != ''].index.values[0]
+    dyLeft = (leftYIn-leftYOut)/(leftXIn-leftXOut)
+    leftYExt = (leftYOut + (dyLeft * (start-leftXOut) * leftYOut))
+    
+    rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+    rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+    rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
+    rightXOut = data.loc[end:].loc[data['ZigZag Type'] != ''].index.values[0]
+    dyRight = (rightYOut-rightYIn)/(rightXOut-rightXIn)
+    rightYExt = (rightYIn + (dyRight * (end-rightXIn) * rightYIn))
+
+    extLeftX = [0, leftXIn - start]
+    extLeftY = [leftYExt, leftYIn]
+    extRightX = [len(dat_plot) - (end - rightXIn), len(dat_plot)]
+    extRightY = [rightYIn, rightYExt]
+    
+    plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
+    plt.plot(extRightX, extRightY, linestyle = '--', color = 'b')
 
     plt.xticks(x[::xtick_iter], plot_tl[::xtick_iter], rotation = 45)
     if gridOn:
