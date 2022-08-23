@@ -46,6 +46,6 @@ print(ZigZags1[ZigZags1['ZigZag Type'] != ''])
 
 #ABCD Mapping
 ZigZagsABCD1 = ZigZags1.copy()
-ABCD_mapping(ZigZagsABCD1)
-print(ZigZagsABCD1[ZigZagsABCD1['ABCD1'] != ''])
-plotCandlesWithZigZagABCD(ZigZagsABCD1, 180, 440, 16, False, True, None)
+ABCD1 = ABCD_mapping(ZigZagsABCD1)
+print(ABCD1.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
+plotCandlesWithZigZagABCD(ABCD1, 180, 440, 16, False, True, None)
