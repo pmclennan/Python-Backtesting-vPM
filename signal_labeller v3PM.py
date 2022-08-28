@@ -109,7 +109,7 @@ data = data[data['date'] <= end_date][data['date'] >= start_date].reset_index(dr
 export_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V4"
 export_prefix = data_filename.split("_")[0] + "_" + data_filename.split("_")[1] + "__" + start_date.strftime('%Y%m%d') + '_' + end_date.strftime('%Y%m%d')
 
-for i in range(10, 65, 5):
+for i in range(45, 50, 5):
     print("Running for {} pip TP".format(i))
     run = signal_labeller(data, i)
     export_filename = export_prefix.split(".csv")[0] + ("-{}-TP.csv".format(i))

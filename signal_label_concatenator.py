@@ -22,14 +22,16 @@ def signal_combiner(data_prefix, data_dir, export_dir, export_name):
             master_df.rename(columns = {'label': 'label_' + limit, 'exit_index': 'exit_index_' + limit}, inplace = True)
         else:
             master_df[['label_' + limit, 'exit_index_' + limit]] = data[['label', 'exit_index']]
+    
+    export_datestr =  ("").join(data['date'].iloc[0].split("-")) + "-" + ("").join(data['date'].iloc[-1].split("-"))
 
-    master_df.to_csv(export_dir + export_name + '.csv')
+    master_df.to_csv(export_dir + export_datestr + export_name + '.csv')
 
     return master_df
 
 export_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Multi Label\\"
 export_suffix = '_Signals_Combined'
-data_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V2"
+data_dir = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V4"
 data_prefix = "EURUSD_M1"
 export_name = data_prefix + export_suffix
 
