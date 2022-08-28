@@ -46,8 +46,13 @@ def ABCD_mapping(dataWithZigZags):
             #Dpx < Bpx
             #C Px > C(+1) High Px
             
+<<<<<<< HEAD
             #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
             if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
+=======
+            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
+            #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
+>>>>>>> e9ab6a02130ea387442529ab702afdbeeb11e393
                 #Conditions met - find indices in main DF (B & D left) and insert labels
                 idxB = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+1]].index.values[0]
                 idxD = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+3]].index.values[0]
@@ -88,8 +93,13 @@ def ABCD_mapping(dataWithZigZags):
             #Dpx > Bpx
             #C Px > C(+1) Low Px
             
+<<<<<<< HEAD
             #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx > Bpx) and (Cnextlowpx < Cpx):
             if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (Dpx > Bpx) and (Cnextlowpx > Cpx):
+=======
+            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx > Bpx) and (Cnextlowpx < Cpx):
+            #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (Dpx > Bpx) and (Cnextlowpx > Cpx):
+>>>>>>> e9ab6a02130ea387442529ab702afdbeeb11e393
                 #Conditions met - find indices in main DF (B & D left) and insert labels
                 idxB = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+1]].index.values[0]
                 idxD = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+3]].index.values[0]
