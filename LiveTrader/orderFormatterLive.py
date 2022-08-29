@@ -4,7 +4,9 @@ import datetime
 class orderFormatter:
     
     def __init__(self, inputSymbol, inputVolume, inputAction, inputPrice, inputTp, inputSl, positionId, \
-         inputDeviation = 20, inputComment = "", inputTypeTime = mt5.ORDER_TIME_GTC, inputTypeFilling = mt5.ORDER_FILLING_IOC):
+         inputDeviation = 20, inputTypeTime = mt5.ORDER_TIME_GTC, inputTypeFilling = mt5.ORDER_FILLING_IOC):
+
+        #Main purpose is to handle formatting a signal & send it to MT5.
         
         self.inputSymbol = inputSymbol
         self.inputVolume = inputVolume
@@ -24,7 +26,7 @@ class orderFormatter:
 
     def formatRequest(self):       
 
-        ##TODO - check logic on if open trades
+        #Checks order type and formats request dictionary as appropriate
 
         if self.inputAction[0:4] == "HOLD":
             request = "No Request"
@@ -79,6 +81,9 @@ class orderFormatter:
         return self.request
 
     def sendRequest(self, request = None):
+        #Sends the request
+        #Built in optionality to input a specific request, but not used at this stage.
+
         if request == None:
             request = self.request
         

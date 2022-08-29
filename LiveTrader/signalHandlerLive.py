@@ -29,6 +29,7 @@ class signalHandlerLive:
         self.currAskPrice = None
 
     def updatePostExecution(self, position, executedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn):
+        #Here we update relevant details from MetaTrader 5 about current positions
         self.prevTradedPosition = position
         self.prevTradedPrice = executedPrice
         self.takeProfitPrice = takeProfitPrice
@@ -37,14 +38,20 @@ class signalHandlerLive:
         self.sizeOn = sizeOn
 
     def refresh(self, bidPrice, askPrice):
+        #Refresh bid/ask - used to outputting expected/targeted execution price
         self.currBidPrice = bidPrice
         self.currAskPrice = askPrice
 
     def refreshAndCheck(self, bidPrice, askPrice):
+        #Not in use - see cmments under checkStpCondition
         self.refresh(bidPrice, askPrice)
         self.checkStopConditions(self.currBidPrice, self.currAskPrice)
 
     def handleSignal(self, signal):
+        #Handles the simple (1, 0, -1) strategy result and calls other functions to do the rest of the work
+        #That is, pick price target, set sl/tp etc
+        #And returns a dictionary ready to be formatted for MT5
+
         if signal == 1:
             self.buy()            
         elif signal == -1:
@@ -59,6 +66,7 @@ class signalHandlerLive:
         return signalInfo
         
     def buy(self):
+        #Self explanatory - sets properties for buy order
         
         if self.prevTradedPosition == 0:
             self.currAction = "BUY"
@@ -69,15 +77,13 @@ class signalHandlerLive:
         elif self.prevTradedPosition == -1:
             self.currAction = "CLOSE SHORT"            
 
-        #Refresh done just before processing signal
-        #So sl/tp conditions already accounted for
-
         else: 
             print("Should not be here")
            
         return self.currAction
 
     def sell(self):
+        #Similar to buy()
 
         if self.prevTradedPosition == 0:
             self.currAction = "SELL"
@@ -97,6 +103,8 @@ class signalHandlerLive:
         return self.currAction
 
     def hold(self):
+        #Similar to the above but useful as clears out expected prices
+
         if self.prevTradedPosition == -1:
             self.currAction = "HOLD SHORT"
         elif self.prevTradedPosition == 1:
@@ -110,8 +118,8 @@ class signalHandlerLive:
 
     def checkStopConditions(self):
         ##NEED TO CONFIRM IF THIS IS ACTUALLY REQUIRED
-        ##AUTO SL/TP HANDLED BY MT5?
-        
+        ##Seems as if we can get away with auto sl/tp trigger in MT5
+
         if self.prevTradedPosition == 1:
             self.currPL = self.prevTradedPrice - self.currBidPrice
 
@@ -122,6 +130,7 @@ class signalHandlerLive:
             self.closeTrade()
 
     def closeTrade(self):
+        #Also not in use... as above
         
         if self.prevTradedPosition == 1:
             self.handleSignal(-1)
