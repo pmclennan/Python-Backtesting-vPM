@@ -18,11 +18,6 @@ from orderFormatterLive import orderFormatter
 #Signal Writer
 #Sent to MT5
 
-#MT5 Live acc
-#login = 7075929
-#password = 'ULP3jJgr'
-#server = 'ICMarkets-MT5-2'
-
 ##Initial Params
 #Demo acc
 login = 50950826
@@ -33,9 +28,11 @@ symbol = 'EURUSD.a'
 interval = mt5.TIMEFRAME_M5
 takeProfitAmt = 0.0005
 stopLossAmt = 0.0005
-lookbackPeriod = 100
-intervalToMinutes = {mt5.TIMEFRAME_M15: 15, mt5.TIMEFRAME_M5: 5, mt5.TIMEFRAME_M1: 1,mt5.TIMEFRAME_H1: 60}
+lookbackPeriod = 100 #How many bars are pulled each refresh
+lotsToTrade = 0.01 #Volume to trade
+intervalToMinutes = {mt5.TIMEFRAME_M15: 15, mt5.TIMEFRAME_M5: 5, mt5.TIMEFRAME_M1: 1,mt5.TIMEFRAME_H1: 60} #Useful for working with number of bars & time
 
+#MT5 Initialization
 mt5.initialize()
 mt5_auth = mt5.login(login = login, password = password, server = server)
 mt5.login(login = login, password = password, server = server)
@@ -49,9 +46,6 @@ tRates = 0 #Initialized as zero by intention
 tTicks = 0 #Initialized as zero by intention
 lastBarTime = datetime.datetime(2000, 1, 1)
 lastBarTimeUTC = datetime.datetime(2000, 1, 1, tzinfo = pytz.utc) #Initialized as now by intention
-
-#Other params
-lotsToTrade = 0.01 #Volume to trade
 
 #Initialize broker
 broker = signalHandlerLive(takeProfitAmt, stopLossAmt)
@@ -86,6 +80,7 @@ while True:
             positionId = result.order
             sizeOn = positionDict['volume']  
 
+        #Update broker object
         broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
 
         #Reset pullSuccessFlag as we are now looking to pull latest bar
@@ -101,6 +96,7 @@ while True:
             if not ratesDat.empty:
                 ratesDat['time'] = pd.to_datetime(ratesDat['time'], unit = 's')
                 if ratesDat['time'].iloc[-1] > lastBarTime:
+                    #Successful Pull - update flag and proceed
                     pullSuccessFlag = 1
             
         ##Time storage
@@ -133,7 +129,7 @@ while True:
 
         ##Update once order has been sent & align with MT5
         if formatter.lastRetcode == mt5.TRADE_RETCODE_DONE:
-            #Check if trade done and positions == 1, then update appropriate data from there.
+            #Check if trade done and len(positions) == 1, then update appropriate data from there.
             positions = mt5.positions_get(symbol = symbol)
             if len(positions) == 1:
                 position = positions[0]
