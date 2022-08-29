@@ -77,6 +77,9 @@ class signalHandlerLive:
         elif self.prevTradedPosition == -1:
             self.currAction = "CLOSE SHORT"            
 
+        elif self.prevTradedPosition == 1:
+            self.hold()
+
         else: 
             print("Should not be here")
            
@@ -93,6 +96,9 @@ class signalHandlerLive:
 
         elif self.prevTradedPosition == 1:
             self.currAction = "CLOSE LONG"          
+
+        elif self.prevTradedPosition == -1:
+            self.hold()
 
         #Refresh done just before processing signal
         #So sl/tp conditions already accounted for

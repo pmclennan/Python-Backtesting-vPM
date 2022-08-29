@@ -127,31 +127,34 @@ while True:
         request = formatter.formatRequest()
         result = formatter.sendRequest()
 
-        ##Update once order has been sent & align with MT5
-        if formatter.lastRetcode == mt5.TRADE_RETCODE_DONE:
-            #Check if trade done and len(positions) == 1, then update appropriate data from there.
-            positions = mt5.positions_get(symbol = symbol)
-            if len(positions) == 1:
-                position = positions[0]
-                positionDict = position._asdict()
-                
-                prevTradedPosition = 1 if positionDict['type'] == 0 else -1
-                prevTradedPrice = positionDict['price_open']
-                takeProfitPrice = positionDict['tp']
-                stopLossPrice = positionDict['sl']
-                positionId = result.order
-                sizeOn = positionDict['volume']            
+        #Check order info if a request is sent
+        if request != 'No Request':
 
-            #Or if a trade has been closed
-            elif len(positions) == 0:
-                prevTradedPosition = 0
-                prevTradedPrice = None
-                takeProfitPrice = None
-                stopLossPrice = None
-                positionId = None
-                sizeOn = None
+            ##Update once order has been sent & align with MT5
+            if formatter.lastRetcode == mt5.TRADE_RETCODE_DONE:
+                #Check if trade done and len(positions) == 1, then update appropriate data from there.
+                positions = mt5.positions_get(symbol = symbol)
+                if len(positions) == 1:
+                    position = positions[0]
+                    positionDict = position._asdict()
+                    
+                    prevTradedPosition = 1 if positionDict['type'] == 0 else -1
+                    prevTradedPrice = positionDict['price_open']
+                    takeProfitPrice = positionDict['tp']
+                    stopLossPrice = positionDict['sl']
+                    positionId = positionDict['ticket']
+                    sizeOn = positionDict['volume']            
 
-            broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
+                #Or if a trade has been closed
+                elif len(positions) == 0:
+                    prevTradedPosition = 0
+                    prevTradedPrice = None
+                    takeProfitPrice = None
+                    stopLossPrice = None
+                    positionId = None
+                    sizeOn = None
 
-        else:
-            print("Order Failed with code {} \n".format(formatter.lastRetcode))            
+                broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
+
+            else:
+                print("Order Failed with code {} \n".format(formatter.lastRetcode))            
