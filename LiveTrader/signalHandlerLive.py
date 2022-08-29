@@ -18,19 +18,23 @@ class signalHandlerLive:
         self.expectedStopLossPrice = None
         self.expectedTakeProfitPrice = None
 
-        self.prevTradedPosition = None
+        self.prevTradedPosition = 0
         self.prevTradedPrice = None
         self.takeProfitPrice = None
         self.stopLossPrice = None
+        self.positionId = None
+        self.sizeOn = None
 
         self.currBidPrice = None
         self.currAskPrice = None
 
-    def updatePostExecution(self, position, executedPrice, takeProfitPrice, stopLossPrice):
+    def updatePostExecution(self, position, executedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn):
         self.prevTradedPosition = position
         self.prevTradedPrice = executedPrice
         self.takeProfitPrice = takeProfitPrice
         self.stopLossPrice = stopLossPrice
+        self.positionId = positionId
+        self.sizeOn = sizeOn
 
     def refresh(self, bidPrice, askPrice):
         self.currBidPrice = bidPrice
@@ -48,7 +52,9 @@ class signalHandlerLive:
         elif signal == 0:            
             self.hold()
 
-        signalInfo = {"Action": self.currAction, "Price": self.expectedExecutionPrice, "TP": self.expectedTakeProfitPrice, "SL": self.expectedStopLossPrice}
+        signalInfo = {"Action": self.currAction, "Price": self.expectedExecutionPrice, \
+            "TP": self.expectedTakeProfitPrice, "SL": self.expectedStopLossPrice, \
+                "positionId": self.positionId, 'Volume': self.sizeOn}
 
         return signalInfo
         
@@ -57,8 +63,8 @@ class signalHandlerLive:
         if self.prevTradedPosition == 0:
             self.currAction = "BUY"
             self.expectedExecutionPrice = self.currAskPrice
-            self.expectedTakeProfitPrice = self.expectedExecutionPrice + self.takeProfitAmt
-            self.expectedStopLossPrice = self.expectedExecutionPrice - self.stopLossAmt
+            self.expectedTakeProfitPrice = round(self.expectedExecutionPrice + self.takeProfitAmt, 5)
+            self.expectedStopLossPrice = round(self.expectedExecutionPrice - self.stopLossAmt, 5)
 
         elif self.prevTradedPosition == -1:
             self.currAction = "CLOSE SHORT"            
@@ -76,11 +82,11 @@ class signalHandlerLive:
         if self.prevTradedPosition == 0:
             self.currAction = "SELL"
             self.expectedExecutionPrice = self.currAskPrice
-            self.expectedTakeProfitPrice = self.expectedExecutionPrice - self.takeProfitAmt
-            self.expectedStopLossPrice = self.expectedExecutionPrice + self.stopLossAmt
+            self.expectedTakeProfitPrice = round(self.expectedExecutionPrice - self.takeProfitAmt, 5)
+            self.expectedStopLossPrice = round(self.expectedExecutionPrice + self.stopLossAmt, 5)
 
         elif self.prevTradedPosition == 1:
-            self.currAction = "CLOSE LONG"            
+            self.currAction = "CLOSE LONG"          
 
         #Refresh done just before processing signal
         #So sl/tp conditions already accounted for
@@ -102,8 +108,10 @@ class signalHandlerLive:
         self.expectedStopLossPrice = None
         self.expectedTakeProfitPrice = None
 
-    def checkStopCondition(self):
-
+    def checkStopConditions(self):
+        ##NEED TO CONFIRM IF THIS IS ACTUALLY REQUIRED
+        ##AUTO SL/TP HANDLED BY MT5?
+        
         if self.prevTradedPosition == 1:
             self.currPL = self.prevTradedPrice - self.currBidPrice
 
@@ -116,7 +124,7 @@ class signalHandlerLive:
     def closeTrade(self):
         
         if self.prevTradedPosition == 1:
-            self.sell()
+            self.handleSignal(-1)
         
         elif self.prevTradedPosition == -1:
-            self.buy()
+            self.handleSignal(1)

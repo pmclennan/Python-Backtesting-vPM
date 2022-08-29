@@ -29,7 +29,7 @@ login = 50950826
 password = 'pwqC1Mx3'
 server = 'ICMarkets-Demo'
 
-symbol = 'EURUSD'
+symbol = 'EURUSD.a'
 interval = mt5.TIMEFRAME_M5
 takeProfitAmt = 0.0005
 stopLossAmt = 0.0005
@@ -44,55 +44,118 @@ print("Log:", mt5.last_error())
 print("Account/Connection Info:", mt5.account_info()._asdict())
 
 #Final Initialization
+intervalMinutes = intervalToMinutes[interval] #Convert for working with time
+tRates = 0 #Initialized as zero by intention
+tTicks = 0 #Initialized as zero by intention
+lastBarTime = datetime.datetime(2000, 1, 1)
+lastBarTimeUTC = datetime.datetime(2000, 1, 1, tzinfo = pytz.utc) #Initialized as now by intention
 
-intervalMinutes = intervalToMinutes[interval]
-tRates = 0
-tTicks = 0
+#Other params
+lotsToTrade = 0.01 #Volume to trade
 
+#Initialize broker
 broker = signalHandlerLive(takeProfitAmt, stopLossAmt)
 
+#Infinite loop
 while True:
 
-    #Check stoploss/takeprofit every 10 sec
-    if (time.time() - tTicks) >= 10:
-        lastTickDat = mt5.symbol_info_tick(symbol)
-        if broker.prevTradedPosition is not None and broker.prevTradedPrice is not None and broker.takeProfitPrice is not None and broker.stopLossPrice is not None:
-            broker.refreshAndCheck(lastTickDat.bid, lastTickDat.ask)
+    ##Trigger a new bar process
+    #Check if time since last pull OR time since last bar exceeds the frequency
+    if (time.time() - tRates) or (datetime.datetime.now(tz = pytz.utc) - lastBarTimeUTC) >= intervalMinutes * 60:
 
-    #Trigger a new bar
-    if (time.time() - tRates) >= intervalMinutes * 60:
-        #Trigger every bar
+        ##First, align with MT5
+        positions = mt5.positions_get(symbol = symbol)
+        if len(positions) == 0:
+            #Handles if a sl/tp has been hit IN MT5
+            prevTradedPosition = 0
+            prevTradedPrice = None
+            takeProfitPrice = None
+            stopLossPrice = None
+            positionId = None
+            sizeOn = None
 
+        elif len(positions) == 1:
+            #Simply refreshes/confirms position info
+            position = positions[0]
+            positionDict = position._asdict()
+            
+            prevTradedPosition = 1 if positionDict['type'] == 0 else -1
+            prevTradedPrice = positionDict['price_open']
+            takeProfitPrice = positionDict['tp']
+            stopLossPrice = positionDict['sl']
+            positionId = result.order
+            sizeOn = positionDict['volume']  
+
+        broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
+
+        #Reset pullSuccessFlag as we are now looking to pull latest bar
+        pullSuccessFlag = 0
+
+        #Format time for pulling - make sure it covers required number of bars
         startTime, endTime = ratesTimeRange(datetime.datetime.now(tz = pytz.utc), intervalMinutes, lookbackPeriod)
-        #Prep time
-
-        #Pull new set of bars
-        ratesDat = pd.DataFrame(mt5.copy_rates_range(symbol, interval, startTime, endTime))
-        ratesDat['time'] = pd.to_datetime(ratesDat['time'], unit = 's')
+        
+        ##Data Pull
+        #Keep trying to pull set of bars. Proceed if pull is not empty & last bar is new
+        while not pullSuccessFlag:
+            ratesDat = pd.DataFrame(mt5.copy_rates_range(symbol, interval, startTime, endTime))
+            if not ratesDat.empty:
+                ratesDat['time'] = pd.to_datetime(ratesDat['time'], unit = 's')
+                if ratesDat['time'].iloc[-1] > lastBarTime:
+                    pullSuccessFlag = 1
+            
+        ##Time storage
+        #Store last bar time - localize for time comparison purposes
         lastBarTime = ratesDat['time'].iloc[-1]
+        lastBarTimeUTC = lastBarTime.tz_localize(tz = pytz.utc)
+        #Also store general time
         tRates = time.time()
 
-        #Refresh & Check
-        lastTickDat = mt5.symbol_info_tick(symbol)
-        if broker.prevTradedPosition is not None and broker.prevTradedPrice is not None and broker.takeProfitPrice is not None and broker.stopLossPrice is not None:
-            broker.refreshAndCheck(lastTickDat.bid, lastTickDat.ask)        
-
-        #Strategy decision
+        ##Strategy decision
         strategy = parabolic_SAR.pSAR(ratesDat)
         strategyResult = strategy.run_pSAR()
         
-        #Update in signal handler
+        ##Update in signal handler
         lastTickDat = mt5.symbol_info_tick(symbol)
-        broker.refresh(lastTickDat.bid, lastTickDat.ask) #Just update new prices
+        broker.refresh(lastTickDat.bid, lastTickDat.ask) #Just update new prices, not checking sl/tp as interferes with next decision.
         signalResults = broker.handleSignal(strategyResult)
-        
-        ##Work in getting previous positions - for closing trades
-        #Format and send to MT5
-        formatter = orderFormatter(symbol, 0.01, signalResults['Action'], signalResults['Price'], signalResults['TP'], signalResults['SL'])
+                
+        ##Format and send to MT5
+        #Use volume from open position, otherwise predefined trading volume (should be equal, but just in case)
+        if signalResults['Action'][0:5] == 'CLOSE':            
+            volToTrade = signalResults['Volume']
+        else:
+            volToTrade = lotsToTrade
+
+        #Format and send
+        formatter = orderFormatter(symbol, volToTrade, signalResults['Action'], signalResults['Price'], signalResults['TP'], signalResults['SL'], signalResults['positionId'])
         request = formatter.formatRequest()
-        formatter.sendRequest()
+        result = formatter.sendRequest()
 
-        #Update post order has been sent
-        positions = mt5.positions_get(symbol = symbol)
+        ##Update once order has been sent & align with MT5
+        if formatter.lastRetcode == mt5.TRADE_RETCODE_DONE:
+            #Check if trade done and positions == 1, then update appropriate data from there.
+            positions = mt5.positions_get(symbol = symbol)
+            if len(positions) == 1:
+                position = positions[0]
+                positionDict = position._asdict()
+                
+                prevTradedPosition = 1 if positionDict['type'] == 0 else -1
+                prevTradedPrice = positionDict['price_open']
+                takeProfitPrice = positionDict['tp']
+                stopLossPrice = positionDict['sl']
+                positionId = result.order
+                sizeOn = positionDict['volume']            
 
-        print("test1")
+            #Or if a trade has been closed
+            elif len(positions) == 0:
+                prevTradedPosition = 0
+                prevTradedPrice = None
+                takeProfitPrice = None
+                stopLossPrice = None
+                positionId = None
+                sizeOn = None
+
+            broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
+
+        else:
+            print("Order Failed with code {} \n".format(formatter.lastRetcode))            

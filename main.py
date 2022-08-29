@@ -133,31 +133,39 @@ os.mkdir(subfolder)
 
 save_time = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
 
+##2808 - new file format.
+## Leave individual files the same name, as referenced by the folder theyre in. Otherwise directories are too long.
+
 #History data save
 history_data = broker.getHistory() # <----- Gets Data into a DATAFRAME 
 history_data['position'] = history_data['position'].replace("", np.nan) #Remove empty period at the start (no position established yet)
 history_data = history_data.dropna().reset_index(drop = True) #Drop this period
-history_filename_str = "bt_history" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+#history_filename_str = "bt_history" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+history_filename_str = "History"
 history_filename_path = os.path.join(subfolder, history_filename_str).replace('\\', '/')
 
 #Summary data save
 summary_data = broker.getSummary()
 summary_data.insert(loc = 3, column = 'Frequency', value = frequency_str)
-summary_filename_str = "bt_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+#summary_filename_str = "bt_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+summary_filename_str = "Summary"
 summary_filename_path = os.path.join(subfolder, summary_filename_str).replace('\\', '/')
 
 #Weekly summary/breakdown data save
 weekly_summary_data = get_weekly_summary(history_data, frequency_str)
-weekly_summary_filename_str = "bt_weekly_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+#weekly_summary_filename_str = "bt_weekly_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+weekly_summary_filename_str = "Weekly_Summary"
 weekly_summary_filename_path = os.path.join(subfolder, weekly_summary_filename_str).replace('\\', '/')
 
 #Trade Summary
 trade_summary_data = get_trade_summary(history_data)
-trade_summary_filename_str = "bt_trade_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+#trade_summary_filename_str = "bt_trade_summary" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".csv" 
+trade_summary_filename_str = "Trade_Summary"
 trade_summary_filename_path = os.path.join(subfolder, trade_summary_filename_str).replace('\\', '/')
 
 #Image file export preparation
-image_filename_str = "bt_plot" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".png"
+#image_filename_str = "bt_plot" + save_time + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date())) + ".png"
+image_filename_str = "Plot"
 image_filename_path = os.path.join(subfolder, image_filename_str).replace('\\', '/')
 
 # final_data has FIVE new coloumns

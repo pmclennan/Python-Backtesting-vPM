@@ -3,8 +3,8 @@ import datetime
 
 class orderFormatter:
     
-    def __init__(self, inputSymbol, inputVolume, inputAction, inputPrice, inputTp, inputSl, \
-         inputDeviation = 0.0002, inputComment = "", inputTypeTime = mt5.ORDER_TIME_GTC, inputTypeFilling = mt5.ORDER_FILLING_FOK):
+    def __init__(self, inputSymbol, inputVolume, inputAction, inputPrice, inputTp, inputSl, positionId, \
+         inputDeviation = 20, inputComment = "", inputTypeTime = mt5.ORDER_TIME_GTC, inputTypeFilling = mt5.ORDER_FILLING_IOC):
         
         self.inputSymbol = inputSymbol
         self.inputVolume = inputVolume
@@ -12,14 +12,15 @@ class orderFormatter:
         self.inputPrice = inputPrice
         self.inputTp = inputTp
         self.inputSl = inputSl
+        self.positionId = positionId
         self.inputDeviation = inputDeviation
-        self.inputComment = "Python Order" + inputComment + str(datetime.datetime.now())
+        self.inputComment = "Python " + self.inputAction + " Order"
         self.inputTypeTime = inputTypeTime
         self.inputTypeFilling = inputTypeFilling
 
         self.action = None
         self.request = None
-        self.requestRetcode = None
+        self.lastRetcode = None
 
     def formatRequest(self):       
 
@@ -28,27 +29,50 @@ class orderFormatter:
         if self.inputAction[0:4] == "HOLD":
             request = "No Request"
 
-        if self.inputAction == "LONG" or self.inputAction == "SHORT":
-            self.tp = self.inputTp
-            self.sl = self.inputSl
-            if self.inputAction == "LONG":
-                self.orderDirection = mt5.ORDER_TYPE_BUY
-            elif self.inputAction == "SHORT":
+        elif self.inputAction[0:5] == "CLOSE":
+            self.action = mt5.TRADE_ACTION_DEAL
+            if self.inputAction == "CLOSE LONG":
                 self.orderDirection = mt5.ORDER_TYPE_SELL
-        
-            request = {
-                "action": self.action,
+            elif self.inputAction == "CLOSE SHORT":
+                self.orderDirection = mt5.ORDER_TYPE_BUY
+
+            request={
+                "action": mt5.TRADE_ACTION_DEAL,
                 "symbol": self.inputSymbol,
                 "volume": self.inputVolume,
                 "type": self.orderDirection,
-                "price": self.price,
+                "position": self.positionId,
+                "price": self.inputPrice,
+                "deviation": self.inputDeviation,
+                "comment": self.inputComment,
+                "type_time": self.inputTypeTime,
+                "type_filling": self.inputTypeFilling
+            }
+
+        elif self.inputAction == "BUY" or self.inputAction == "SELL":
+            self.tp = self.inputTp
+            self.sl = self.inputSl
+            if self.inputAction == "BUY":
+                self.orderDirection = mt5.ORDER_TYPE_BUY
+            elif self.inputAction == "SELL":
+                self.orderDirection = mt5.ORDER_TYPE_SELL
+        
+            request = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": self.inputSymbol,
+                "volume": self.inputVolume,
+                "type": self.orderDirection,
+                "price": self.inputPrice,
                 "sl": self.sl,
                 "tp": self.tp,
-                "deviation": self.deviation,
-                "comment": self.comment,
-                "type_time": self.type_time,
-                "type_filling": self.type_filling
+                "deviation": self.inputDeviation,
+                "comment": self.inputComment,
+                "type_time": self.inputTypeTime,
+                "type_filling": self.inputTypeFilling
                 }
+        
+        else:
+            print("Unable to format request")
         
         self.request = request
 
@@ -58,10 +82,11 @@ class orderFormatter:
         if request == None:
             request = self.request
         
-        if request != "No Request":
+        if request == "No Request":
+            self.lastResult = 'No Request Sent'
             
-            result = mt5.order_send(request)
-            self.requestRetcode = result.retcode
-
-            if self.requestRetcode != mt5.TRADE_RETCODE_DONE:
-                print(self.requestRetcode)
+        else:
+            self.lastResult = mt5.order_send(request)
+            self.lastRetcode = self.lastResult.retcode
+        
+        return self.lastResult
