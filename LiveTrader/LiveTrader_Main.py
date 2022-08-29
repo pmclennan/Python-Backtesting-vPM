@@ -84,14 +84,14 @@ while True:
         broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
 
         #Reset pullSuccessFlag as we are now looking to pull latest bar
-        pullSuccessFlag = 0
+        pullSuccessFlag = 0     
 
-        #Format time for pulling - make sure it covers required number of bars
-        startTime, endTime = ratesTimeRange(datetime.datetime.now(tz = pytz.utc), intervalMinutes, lookbackPeriod)
-        
         ##Data Pull
         #Keep trying to pull set of bars. Proceed if pull is not empty & last bar is new
+        print("Pulling Rates")
         while not pullSuccessFlag:
+            #Format time for pulling - make sure it covers required number of bars
+            startTime, endTime = ratesTimeRange(datetime.datetime.now(tz = pytz.utc), intervalMinutes, lookbackPeriod)
             ratesDat = pd.DataFrame(mt5.copy_rates_range(symbol, interval, startTime, endTime))
             if not ratesDat.empty:
                 ratesDat['time'] = pd.to_datetime(ratesDat['time'], unit = 's')
