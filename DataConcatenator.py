@@ -5,7 +5,16 @@ import numpy as np
 
 def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, replacementSpread = 3):
    
+    #First, find the starting times of both files and use the latest.
     timeCol = ratesDat.columns[0]
+
+    firstRatesTime = ratesDat.iloc[0, 0]
+    firstTicksTime = ticksDat.iloc[0, 0]
+
+    if firstRatesTime > firstTicksTime:
+        ticksDat = ticksDat[ticksDat[timeCol] >= firstRatesTime]
+    else:
+        ratesDat = ratesDat[ratesDat[timeCol] >= firstTicksTime]
 
     #Replacement Policy:
         #1: Replace extreme (spread > 1000pips) & zeroes with spread average of past 5/forward 5 values
@@ -32,7 +41,7 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
     if ticksCleanFlag == 1:
         #Average spread of 5 behind / 5 forward rounded to nearest pip
         #NB if unavailable for forward 5 (near end of Data), shift this range back as appropriate (and vice versa if at the start)
-            # IE if 4 indexes from the end, use 7 behind / 3 forward rather than 5 / 5
+            # EG if 4 indexes from the end, use 7 behind / 3 forward rather than 5 / 5
         for idx in missingIDX:
             if len(concatDF) - idx <= 5:
                 shiftFactor = (len(concatDF) - idx) - 6
@@ -64,10 +73,10 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
 
     return concatDF
 
-datFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\Python-Backtesting-vPM\\Datasets\\ConcatWB"
+datFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\EURUSDM5_01012017-270822"
 
-ratesFileName = "EURUSD_M5_202108270000_202208262355.csv"
-ticksFileName = "EURUSD_202108270000_202208262356.csv"
+ticksFileName = "EURUSD.a_202110141713_202208262356.csv"
+ratesFileName = "EURUSD.a_M5_201701020000_202208262355.csv"
 
 ratesDir = os.path.join(datFolder, ratesFileName)
 ticksDir = os.path.join(datFolder, ticksFileName)
@@ -81,6 +90,14 @@ for oldCol in ratesDat.columns:
 for oldCol in ticksDat.columns:
     ticksDat.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '')}, inplace = True)
 
-test1 = ratesTicksConcatenator(ratesDat, ticksDat, '5T')
+EURUSDM5_dat = ratesTicksConcatenator(ratesDat, ticksDat, '5T')
 
-print("test1")
+exportFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\CombinedDatasets"
+
+startDate = EURUSDM5_dat.iloc[0, 0]
+endDate = EURUSDM5_dat.iloc[-1, 0]
+
+exportName = "EURUSDM5_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
+exportDir = os.path.join(exportFolder, exportName)
+
+EURUSDM5_dat.to_csv(exportDir)
