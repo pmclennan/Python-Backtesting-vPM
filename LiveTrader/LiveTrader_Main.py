@@ -77,7 +77,7 @@ while True:
             prevTradedPrice = positionDict['price_open']
             takeProfitPrice = positionDict['tp']
             stopLossPrice = positionDict['sl']
-            positionId = result.order
+            positionId = positionDict['ticket']
             sizeOn = positionDict['volume']  
 
         #Update broker object
@@ -85,7 +85,7 @@ while True:
 
         #Reset pullSuccessFlag as we are now looking to pull latest bar
         pullSuccessFlag = 0     
-
+        
         ##Data Pull
         #Keep trying to pull set of bars. Proceed if pull is not empty & last bar is new
         print("Pulling Rates")
@@ -98,6 +98,7 @@ while True:
                 if ratesDat['time'].iloc[-1] > lastBarTime:
                     #Successful Pull - update flag and proceed
                     pullSuccessFlag = 1
+                    print("Rates Pulled")
             
         ##Time storage
         #Store last bar time - localize for time comparison purposes
@@ -142,7 +143,7 @@ while True:
                     prevTradedPrice = positionDict['price_open']
                     takeProfitPrice = positionDict['tp']
                     stopLossPrice = positionDict['sl']
-                    positionId = positionDict['ticket']
+                    positionId = result.order
                     sizeOn = positionDict['volume']            
 
                 #Or if a trade has been closed
@@ -157,4 +158,7 @@ while True:
                 broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
 
             else:
-                print("Order Failed with code {} \n".format(formatter.lastRetcode))            
+                print("Order Failed with code {} \n".format(formatter.lastRetcode))
+        
+        #Useful status update after every bar process
+        print("Current Position:", broker.currAction)
