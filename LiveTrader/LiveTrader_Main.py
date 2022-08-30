@@ -55,7 +55,7 @@ while True:
 
     ##Trigger a new bar process
     #Check if time since last pull OR time since last bar exceeds the frequency
-    if (time.time() - tRates) or (datetime.datetime.now(tz = pytz.utc) - lastBarTimeUTC) >= intervalMinutes * 60:
+    if ((time.time() - tRates) >= intervalMinutes * 60) or ((datetime.datetime.now(tz = pytz.utc) - lastBarTimeUTC).seconds >= intervalMinutes * 60):
 
         ##First, align with MT5
         positions = mt5.positions_get(symbol = symbol)
