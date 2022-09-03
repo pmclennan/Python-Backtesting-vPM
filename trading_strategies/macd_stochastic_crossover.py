@@ -6,6 +6,7 @@ https://www.dailyfx.com/forex/education/trading_tips/daily_trading_lesson/2020/0
 """
 import pandas as pd
 import ta
+import numpy as np
 
 class MACDStochasticCrossover:
     def __init__(self, data):
@@ -19,6 +20,8 @@ class MACDStochasticCrossover:
         self.df['macd_signal'] = [0] * len(data)
         self.df['stoch_line'] = [0] * len(data)
         self.df['stoch_signal'] = [0] * len(data)
+
+        self.indicatorDf = None
 
     # calculates the macd line
     def add_macd_line(self):
@@ -44,6 +47,7 @@ class MACDStochasticCrossover:
         k_line = self.df['stoch_line']
         d_signal = self.df['stoch_signal']
 
+
         action = 0
 
         # SELL CRITERIA: stoch %k and %d lines crossover that are >80 shortly before MACD signal and line crossover that are >0
@@ -68,9 +72,13 @@ class MACDStochasticCrossover:
 
         return action
 
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'macd_line', 'macd_signal', 'stoch_line', 'stoch_signal']]
+
     def run_macd_stochastic_crossover(self):
         self.add_macd_line()
         self.add_macd_signal()
         self.add_stochastic_line()
         self.add_stochastic_signal_line()
-        return self.determine_signal()
+        self.addIndicatorDf()
+        return self.determine_signal(), self.indicatorDf

@@ -76,7 +76,7 @@ class signalHandlerLive:
 
         elif self.prevTradedPosition == -1:
             self.currAction = "CLOSE SHORT"    
-            self.closeTrade()       
+            self.expectedExecutionPrice = self.currBidPrice
 
         elif self.prevTradedPosition == 1:
             self.hold()
@@ -92,12 +92,12 @@ class signalHandlerLive:
         if self.prevTradedPosition == 0:
             self.currAction = "SELL"
             self.expectedExecutionPrice = self.currAskPrice
-            self.expectedTakeProfitPrice = round(self.expectedExecutionPrice + self.takeProfitAmt, 5)
-            self.expectedStopLossPrice = round(self.expectedExecutionPrice - self.stopLossAmt, 5)
+            self.expectedTakeProfitPrice = round(self.expectedExecutionPrice - self.takeProfitAmt, 5)
+            self.expectedStopLossPrice = round(self.expectedExecutionPrice + self.stopLossAmt, 5)
 
         elif self.prevTradedPosition == 1:
             self.currAction = "CLOSE LONG"  
-            self.closeTrade()        
+            self.expectedExecutionPrice = self.currAskPrice        
 
         elif self.prevTradedPosition == -1:
             self.hold()

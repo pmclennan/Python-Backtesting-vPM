@@ -36,6 +36,7 @@ class signalHandler:
         self.take_profit_px = [""]*n
         self.current_action = ""
         self.data = data
+        self.indicatorDf = pd.DataFrame()
         
         self.trades_total = 0
         self.trades_won = 0
@@ -44,7 +45,7 @@ class signalHandler:
         self.currency = currency
         self.start_date = start_date
         self.end_date = end_date
-        self.summary_df = pd.DataFrame()
+        self.summary_df = pd.DataFrame(columns = self.data.columns)
 
     ############### Helpers ###############
     # Floors or ceils PL 
@@ -106,7 +107,7 @@ class signalHandler:
 
     # Transfers all the data into the DATAFRAME
     # The constructor is initialised with
-    def getHistory(self):
+    def getHistory(self):        
         self.data['signal'] = self.signal_list
         self.data['action'] = self.action
         self.data['position'] = self.position
@@ -115,6 +116,13 @@ class signalHandler:
         self.data['Executed price'] = self.executed_price
         self.data['Stop Loss'] = self.stop_loss_px
         self.data['Take Profit'] = self.take_profit_px
+
+        #Indicator DF
+        insertIdx = self.data.columns.get_loc('signal')
+        insertDF = self.indicatorDf.drop(columns = 'time')
+        for i in range(len(insertDF.columns)):
+            self.data.insert(loc = i + insertIdx, column = insertDF.columns.values[i], value = insertDF.iloc[:, i])
+
         return self.data
 
     # Summary of backtest results - called once completed
@@ -134,7 +142,11 @@ class signalHandler:
         return self.summary_df
     
     # Used to store signal for final summary df
-    def store_signal(self, signal, index):
+    def storeSignalAndIndicators(self, signal, indicatorDf, index):
+        if self.indicatorDf.empty:
+            self.indicatorDf = indicatorDf
+        else:
+            self.indicatorDf = self.indicatorDf.append(indicatorDf.iloc[-1], ignore_index=True)
         self.signal_list[index] = signal
         
     def store_executed_price(self, bid_price, ask_price, index):

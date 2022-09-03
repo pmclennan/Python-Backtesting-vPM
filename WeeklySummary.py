@@ -10,7 +10,7 @@ def get_weekly_summary(data, frequency_str):
 
     if frequency_str == "M15":
         end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 6, hours = 23, minutes = 45)]
-    elif frequency_str == "M05":
+    elif frequency_str == "M05" or frequency_str == "M5":
         end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 6, hours = 23, minutes = 55)]
     elif frequency_str == "D1":
         end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 7)]

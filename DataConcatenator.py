@@ -30,7 +30,7 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
     ticksDat = ticksDat[-(ticksDat['ASK'].isnull() | ticksDat['BID'].isnull())]
 
     #Floor
-    ticksDat.loc[:, timeCol] = ticksDat[timeCol].dt.floor(freq = floorFreq)
+    ticksDat.loc[:, timeCol] = ticksDat.loc[:,timeCol].dt.floor(freq = floorFreq)
 
     #Merge
     concatDF = ratesDat.merge(ticksDat, how = 'left', on = timeCol).groupby(timeCol).first().reset_index()
@@ -51,16 +51,16 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
                 shiftFactor = 0
 
             idxGroup = list(np.arange(idx-5+shiftFactor, idx)) + list(np.arange(idx+1, idx+6+shiftFactor))
-            avgBidSpread = round(np.mean(abs(concatDF['BID'].iloc[idxGroup] - concatDF['CLOSE'].iloc[idxGroup])), 5)
-            avgAskSpread = round(np.mean(abs(concatDF['ASK'].iloc[idxGroup] - concatDF['CLOSE'].iloc[idxGroup])), 5)
-            concatDF['BID'].iloc[idx] = concatDF['CLOSE'].iloc[idx] - avgBidSpread
-            concatDF['ASK'].iloc[idx] = concatDF['CLOSE'].iloc[idx] + avgAskSpread
+            avgBidSpread = round(np.mean(abs(concatDF.loc[idxGroup, 'BID'] - concatDF.loc[idxGroup,'CLOSE'])), 5)
+            avgAskSpread = round(np.mean(abs(concatDF.loc[idxGroup, 'ASK'] - concatDF.loc[idxGroup, 'CLOSE'])), 5)            
+            concatDF.loc[idx, 'BID'] = concatDF.loc[idx, 'CLOSE'] - avgBidSpread
+            concatDF.loc[idx, 'ASK'] = concatDF.loc[idx, 'CLOSE'] + avgAskSpread
 
     elif ticksCleanFlag == 2:
         #Flat spread
         for idx in missingIDX:
-            concatDF['BID'].iloc[idx] = concatDF['CLOSE'].iloc[idx] - (replacementSpread/10000)
-            concatDF['ASK'].iloc[idx] = concatDF['CLOSE'].iloc[idx] + (replacementSpread/10000)
+            concatDF.loc[idx, 'BID'] = concatDF.loc[idx, 'CLOSE'] - (replacementSpread/10000)
+            concatDF.loc[idx, 'ASK'] = concatDF.loc[idx, 'CLOSE'] + (replacementSpread/10000)
 
     #Flag replaced values
     replacedBidAskList = [''] * len(concatDF)
@@ -70,6 +70,7 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
     concatDF['ReplacedBidAsk'] = replacedBidAskList
 
     concatDF = concatDF[[timeCol, 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'BID', 'ASK', 'ReplacedBidAsk']]
+    #concatDF = concatDF[[timeCol, 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'BID', 'ASK']]
 
     return concatDF
 
@@ -97,7 +98,7 @@ exportFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Pyth
 startDate = EURUSDM5_dat.iloc[0, 0]
 endDate = EURUSDM5_dat.iloc[-1, 0]
 
-exportName = "EURUSDM5_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
+exportName = "EURUSD_M5_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
 exportDir = os.path.join(exportFolder, exportName)
 
-EURUSDM5_dat.to_csv(exportDir)
+EURUSDM5_dat.to_csv(exportDir, index = False)

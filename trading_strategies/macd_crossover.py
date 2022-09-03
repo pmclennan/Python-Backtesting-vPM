@@ -20,6 +20,8 @@ class MACDCrossover:
         self.df['macd_line'] = [0] * len(data)
         self.df['macd_signal'] = [0] * len(data)
 
+        self.indicatorDf = None
+
     def add_macd_line(self):
         self.df['macd_line'] = ta.trend.MACD(close=self.df['close']).macd()
 
@@ -49,7 +51,10 @@ class MACDCrossover:
 
         return action
 
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'pSAR', 'RSI', 'slow_k', 'slow_d']]        
+
     def run_macd_crossover(self):
         self.add_macd_line()
         self.add_macd_signal_line()
-        return self.determine_signal(self.df)
+        return self.determine_signal(self.df), self.indicatorDf

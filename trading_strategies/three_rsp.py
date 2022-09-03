@@ -8,6 +8,7 @@ class ThreeRSP:
         self.high = self.df["high"]
         self.low = self.df["low"]
         self.close = self.df["close"]
+        self.indicatorDf = None
         
     def calculate_pSAR(self):
         self.df["pSAR"] = ta.trend.PSARIndicator(high = self.high, low = self.low, close = self.close, step = 0.02, max_step = 0.2).psar()
@@ -68,16 +69,13 @@ class ThreeRSP:
             action = -1
         return action
 
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'pSAR', 'RSI', 'slow_k', 'slow_d']]
+
     def run_3RSP(self):
         self.calculate_pSAR()
         self.calculate_RSI()
         self.calculate_SO()
         signal = self.determine_signal(self.df)
 
-        return signal
-
-
-
-
-
-    
+        return signal, self.indicatorDf

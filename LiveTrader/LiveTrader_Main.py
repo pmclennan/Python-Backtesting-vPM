@@ -12,11 +12,13 @@ from orderFormatterLive import orderFormatter
 #Outline
 
 #Connect to MT5
+#Align python with MT5
 #Pull Data
-#Signal Handler
-#Check Current Positions
-#Signal Writer
-#Sent to MT5
+#Run strategy
+#Handle signal
+#Format signal to order
+#Send to MT5
+#Repeat
 
 ##Initial Params
 #Demo acc
@@ -26,8 +28,8 @@ server = 'ICMarkets-Demo'
 
 symbol = 'EURUSD.a'
 interval = mt5.TIMEFRAME_M5
-takeProfitAmt = 0.0005
-stopLossAmt = 0.0005
+takeProfitAmt = 0.002
+stopLossAmt = 0.001
 lookbackPeriod = 100 #How many bars are pulled each refresh
 lotsToTrade = 0.01 #Volume to trade
 intervalToMinutes = {mt5.TIMEFRAME_M15: 15, mt5.TIMEFRAME_M5: 5, mt5.TIMEFRAME_M1: 1,mt5.TIMEFRAME_H1: 60} #Useful for working with number of bars & time
@@ -44,8 +46,8 @@ print("Account/Connection Info:", mt5.account_info()._asdict())
 intervalMinutes = intervalToMinutes[interval] #Convert for working with time
 tRates = 0 #Initialized as zero by intention
 tTicks = 0 #Initialized as zero by intention
-lastBarTime = datetime.datetime(2000, 1, 1)
-lastBarTimeUTC = datetime.datetime(2000, 1, 1, tzinfo = pytz.utc) #Initialized as now by intention
+lastBarTime = datetime.datetime(2000, 1, 1) #"Dummy" date initalization by intention
+lastBarTimeUTC = datetime.datetime(2000, 1, 1, tzinfo = pytz.utc) #"Dummy" date initalization by intention
 
 #Initialize broker
 broker = signalHandlerLive(takeProfitAmt, stopLossAmt)
@@ -82,6 +84,7 @@ while True:
 
         #Update broker object
         broker.updatePostExecution(prevTradedPosition, prevTradedPrice, takeProfitPrice, stopLossPrice, positionId, sizeOn)
+        print("Starting Position:", broker.currAction, " @", str(datetime.datetime.now()))
 
         #Reset pullSuccessFlag as we are now looking to pull latest bar
         pullSuccessFlag = 0     
@@ -98,7 +101,7 @@ while True:
                 if ratesDat['time'].iloc[-1] > lastBarTime:
                     #Successful Pull - update flag and proceed
                     pullSuccessFlag = 1
-                    print("Rates Pulled")
+                    print("Rates Pulled up to {}".format(ratesDat['time'].iloc[-1]))
             
         ##Time storage
         #Store last bar time - localize for time comparison purposes
@@ -161,4 +164,4 @@ while True:
                 print("Order Failed with code {} \n".format(formatter.lastRetcode))
         
         #Useful status update after every bar process
-        print("Current Position:", broker.currAction)
+        print("Ending Position:", broker.currAction, " @", str(datetime.datetime.now()))

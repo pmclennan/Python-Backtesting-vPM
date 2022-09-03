@@ -11,6 +11,8 @@ class pSAR:
         
         self.df['pSAR'] = [0] * len(self.df)
 
+        self.indicatorDf = None
+
     def add_pSAR(self):
         self.df["pSAR"] = ta.trend.PSARIndicator(high = self.high, low = self.low, close = self.close, step = 0.02, max_step = 0.2).psar()
         self.pSAR = self.df['pSAR']
@@ -29,7 +31,10 @@ class pSAR:
 
         return action
 
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'pSAR']]
+
     def run_pSAR(self):
         self.add_pSAR()
         
-        return self.determine_signal()
+        return self.determine_signal(), self.indicatorDf
