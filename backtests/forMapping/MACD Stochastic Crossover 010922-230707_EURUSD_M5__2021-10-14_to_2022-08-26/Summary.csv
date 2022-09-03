@@ -1,2 +1,2 @@
-time,open,high,Frequency,low,close,bid,ask,signal,action,position,P/L,Total profit,Executed price,Take Profit,Stop Loss,Start,End,Currency Pair,Total Trades,Total P/L,Total P/L (pips),Trades Won (n),Trades Won (%),Trades Lost (n),Trades Lost (%),Trades Tied (n),Trades Tied (%)
-,,,M5,,,,,,,,,,,,,2021-10-14 21:00,2022-08-26 23:00,EURUSD,12,0.012500000000000584,125.00000000000584,6,50.0,6,50.0,0,0.0
+Frequency,Start,End,Currency Pair,Total Trades,Total P/L,Total P/L (pips),Trades Won (n),Trades Won (%),Trades Lost (n),Trades Lost (%),Trades Tied (n),Trades Tied (%)
+M5,14/10/2021 21:00,26/08/2022 23:00,EURUSD,12,0.0125,125,6,50,6,50,0,0

@@ -36,5 +36,6 @@ class pSAR:
 
     def run_pSAR(self):
         self.add_pSAR()
+        self.addIndicatorDf()
         
         return self.determine_signal(), self.indicatorDf

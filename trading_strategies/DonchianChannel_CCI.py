@@ -2,7 +2,7 @@ import pandas as pd
 import ta
 
 class DC_CCI:
-    def __init__(self, data, CCI_window, DC_periods):
+    def __init__(self, data, CCI_window = 20, DC_periods = 20):
 
         self.df = data
         self.high = self.df['high']
@@ -15,6 +15,8 @@ class DC_CCI:
         self.df['CCI'] = [0] * len(self.df)
         self.df['D_UC'] = [0] * len(self.df)
         self.df['D_LC'] = [0] * len(self.df)
+
+        self.indicatorDf = None
 
     def add_CCI(self):
         self.df['CCI'] = ta.trend.CCIIndicator(self.df['high'], self.df['low'], self.df['close'], window = self.CCI_window).cci()
@@ -37,8 +39,12 @@ class DC_CCI:
 
         return action
 
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'CCI', 'D_UC', 'D_LC']]
+
     def run_DC_CCI(self):
         self.add_CCI()
         self.add_DC()
+        self.addIndicatorDf()
         
-        return self.determine_signal()
+        return self.determine_signal(), self.indicatorDf

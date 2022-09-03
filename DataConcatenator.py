@@ -74,13 +74,14 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
 
     return concatDF
 
-datFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\EURUSDM5_01012017-270822"
+ratesDatFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\EURUSDM1_01012017-270822"
+ticksDatFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\TicksDat"
 
 ticksFileName = "EURUSD.a_202110141713_202208262356.csv"
-ratesFileName = "EURUSD.a_M5_201701020000_202208262355.csv"
+ratesFileName = "EURUSD.a_M1_202001020000_202208262356.csv"
 
-ratesDir = os.path.join(datFolder, ratesFileName)
-ticksDir = os.path.join(datFolder, ticksFileName)
+ratesDir = os.path.join(ratesDatFolder, ratesFileName)
+ticksDir = os.path.join(ticksDatFolder, ticksFileName)
 
 ratesDat = pd.read_csv(ratesDir, sep = "\t", parse_dates = [[0, 1]])
 ticksDat = pd.read_csv(ticksDir, sep = "\t", parse_dates = [[0, 1]])
@@ -91,14 +92,14 @@ for oldCol in ratesDat.columns:
 for oldCol in ticksDat.columns:
     ticksDat.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '')}, inplace = True)
 
-EURUSDM5_dat = ratesTicksConcatenator(ratesDat, ticksDat, '5T')
+EURUSDM1_dat = ratesTicksConcatenator(ratesDat, ticksDat, '1T')
 
 exportFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\CombinedDatasets"
 
-startDate = EURUSDM5_dat.iloc[0, 0]
-endDate = EURUSDM5_dat.iloc[-1, 0]
+startDate = EURUSDM1_dat.iloc[0, 0]
+endDate = EURUSDM1_dat.iloc[-1, 0]
 
-exportName = "EURUSD_M5_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
+exportName = "EURUSD_M1_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
 exportDir = os.path.join(exportFolder, exportName)
 
-EURUSDM5_dat.to_csv(exportDir, index = False)
+EURUSDM1_dat.to_csv(exportDir, index = False)

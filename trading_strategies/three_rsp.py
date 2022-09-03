@@ -76,6 +76,7 @@ class ThreeRSP:
         self.calculate_pSAR()
         self.calculate_RSI()
         self.calculate_SO()
+        self.addIndicatorDf()
         signal = self.determine_signal(self.df)
 
         return signal, self.indicatorDf

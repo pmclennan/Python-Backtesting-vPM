@@ -88,9 +88,9 @@ def signal_labeller(data, takeprofit):
     return data
 
 ##Patrick
-data_filename = "EURUSD_M1_202008030000_202208151450.csv"
+data_filename = "EURUSD.a_M1_202009020000_202209022356.csv"
 #data_folder = "C:\\Users\\Patrick\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
-data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live"
+data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
 data_dir = os.path.join(data_folder, data_filename)
 data = pd.read_csv(data_dir, sep='\t', skiprows=1, names = ['date', 'time', 'open', 'high', 'low', 'close', 'tickvol','vol','spread'])
 data['date'] = pd.to_datetime(data['date'])
@@ -106,10 +106,10 @@ data = data[data['date'] <= end_date][data['date'] >= start_date].reset_index(dr
 #data_dir = os.path.join(data_folder, data_filename)
 #data = pd.read_csv(data_dir, sep=',', skiprows=1, names = ['date', 'time', 'open', 'high', 'low', 'close', 'tickvol','vol','spread'], nrows = 500)
 
-export_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V4"
+export_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Labelling project\\Individual Runs\\EURUSD_M1_V5"
 export_prefix = data_filename.split("_")[0] + "_" + data_filename.split("_")[1] + "__" + start_date.strftime('%Y%m%d') + '_' + end_date.strftime('%Y%m%d')
 
-for i in range(45, 50, 5):
+for i in range(20, 25, 5):
     print("Running for {} pip TP".format(i))
     run = signal_labeller(data, i)
     export_filename = export_prefix.split(".csv")[0] + ("-{}-TP.csv".format(i))

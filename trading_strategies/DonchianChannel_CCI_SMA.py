@@ -3,7 +3,7 @@ import ta
 import numpy as np
 
 class DC_CCI_SMA:
-    def __init__(self, data, CCI_window, DC_periods, MA_window, crossover_lookback):
+    def __init__(self, data, CCI_window = 20, DC_periods = 20, SMA_window = 7, crossover_lookback = 5):
 
         self.df = data
         self.high = self.df['high']
@@ -12,7 +12,7 @@ class DC_CCI_SMA:
 
         self.CCI_window = CCI_window
         self.DC_periods = DC_periods
-        self.MA_window = MA_window
+        self.SMA_window = SMA_window
         self.crossover_lookback = crossover_lookback
 
         self.df['CCI'] = [0] * len(self.df)
@@ -21,9 +21,10 @@ class DC_CCI_SMA:
         self.df['D_MC'] = [0] * len(self.df)
         self.df['SMA'] = [0] * len(self.df)
 
+        self.indicatorDf = None
+
     def add_CCI(self):
         self.df['CCI'] = ta.trend.CCIIndicator(self.df['high'], self.df['low'], self.df['close'], window = self.CCI_window).cci()
-
 
     def add_DC(self):
         for i in range(self.DC_periods, len(self.df)):
@@ -32,7 +33,7 @@ class DC_CCI_SMA:
             self.df['D_MC'].iloc[i] = (self.df['D_UC'].iloc[i] + self.df['D_LC'].iloc[i])/2
 
     def add_SMA(self):
-        self.df['SMA'] = ta.trend.SMAIndicator(self.df['close'], window = self.MA_window).sma_indicator()
+        self.df['SMA'] = ta.trend.SMAIndicator(self.df['close'], window = self.SMA_window).sma_indicator()
 
     def determine_signal(self):
         
@@ -53,9 +54,13 @@ class DC_CCI_SMA:
 
         return action
 
-    def run_DC_CCI(self):
+    def addIndicatorDf(self):
+        self.indicatorDf = self.df[['time', 'CCI', 'D_UC', 'D_LC', 'D_MC', 'SMA']]
+
+    def run_DC_CCI_SMA(self):
         self.add_CCI()
         self.add_DC()
         self.add_SMA()
+        self.addIndicatorDf()
         
-        return self.determine_signal()
+        return self.determine_signal(), self.indicatorDf

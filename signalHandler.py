@@ -45,7 +45,7 @@ class signalHandler:
         self.currency = currency
         self.start_date = start_date
         self.end_date = end_date
-        self.summary_df = pd.DataFrame(columns = self.data.columns)
+        self.summary_df = pd.DataFrame()
 
     ############### Helpers ###############
     # Floors or ceils PL 

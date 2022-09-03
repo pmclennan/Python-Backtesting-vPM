@@ -101,8 +101,8 @@ for _,row in data.iterrows():
     
     if len(inputs) == input_row_size:
 
-        strategy = macd_stochastic_crossover.MACDStochasticCrossover(pd.DataFrame(inputs)) #Change loaded strategy
-        signal, indicatorDf = strategy.run_macd_stochastic_crossover() #And call respective strategy run function. NB now returns indicatorDF too.
+        strategy = three_rsp.ThreeRSP(pd.DataFrame(inputs)) #Change loaded strategy
+        signal, indicatorDf = strategy.run_3RSP() #And call respective strategy run function. NB now returns indicatorDF too.
         broker.storeSignalAndIndicators(signal, indicatorDf, index)
 
         # Current Price
@@ -137,7 +137,7 @@ for _,row in data.iterrows():
 
 #Save time and print
 end_time = time.time()
-print("\nTime consumed: {}s".format(round(end_time-start_time,2)))
+print("\nTime consumed: {}s".format(datetime.timedelta(seconds = end_time-start_time)))
 
 #Set up for export folders
 parent_dir = os.path.join(os.getcwd(), "backtests", "forMapping")
