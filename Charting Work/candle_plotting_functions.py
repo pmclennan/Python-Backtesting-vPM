@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import numpy as np
 
-def plotCandles(data, start, end, xtick_iter = 8, gridOn = False, minorTicksOn = True, vertLineStamp = None):
+def plotCandles(data, start = 0, end = 0, xtick_iter = 8, gridOn = False, minorTicksOn = True, vertLineStamp = None):
 
     #Purpose here is to show candles (OHLC) but also deal with Matplotlib 'discontinuity' of plotting over weekends
     #Former is done by just plotting O, H, L & C separately (Open-Close as a wider bar) 
@@ -17,6 +17,9 @@ def plotCandles(data, start, end, xtick_iter = 8, gridOn = False, minorTicksOn =
     #gridOn - to put grid on
     #minorTicksOn - to put x Axis Minor ticks on.
     #vertLineStampe - as flagged above.
+
+    if start == 0 and end == 0:
+        end = len(data)    
 
     dat_plot = data.iloc[start:end].reset_index(drop = True, inplace = False)
     x = np.arange(0, len(dat_plot))
@@ -45,8 +48,11 @@ def plotCandles(data, start, end, xtick_iter = 8, gridOn = False, minorTicksOn =
         ax.xaxis.set_minor_locator(MultipleLocator(1))
     plt.show()
 
-def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
+def plotCandlesWithZigZag(data, start = 0, end = 0, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
     
+    if start == 0 and end == 0:
+        end = len(data)
+
     dat_plot = data.iloc[start:end].reset_index(drop = True, inplace = False)
     x = np.arange(0, len(dat_plot))
     plot_tl = [str(dat_plot['time'].dt.date.iloc[x]) + " " + str(dat_plot['time'].dt.time.iloc[x]) for x in range(0, len(dat_plot))]
@@ -78,19 +84,27 @@ def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, tick
     plt.plot(zigZagX, zigZagY)
     
     #Extrapolation for visualisation..
-    leftYOut = data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
-    leftYIn = data.loc[start:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
-    leftXOut = data.loc[:start].loc[data['ZigZag Type'] != ''].index.values[-1]
-    leftXIn = data.loc[start:].loc[data['ZigZag Type'] != ''].index.values[0]
-    dyLeft = (leftYIn-leftYOut)/(leftXIn-leftXOut)
-    leftYExt = (leftYOut + (dyLeft * (start-leftXOut) * leftYOut))
+    if not data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
+        leftYOut = data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+        leftYIn = data.loc[start:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+        leftXOut = data.loc[:start].loc[data['ZigZag Type'] != ''].index.values[-1]
+        leftXIn = data.loc[start:].loc[data['ZigZag Type'] != ''].index.values[0]
+        dyLeft = (leftYIn-leftYOut)/(leftXIn-leftXOut)
+        leftYExt = (leftYOut + (dyLeft * (start-leftXOut) * leftYOut))
+        extLeftX = [0, leftXIn - start]
+        extLeftY = [leftYExt, leftYIn]        
+        plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
     
-    rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
-    rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
-    rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
-    rightXOut = data.loc[end:].loc[data['ZigZag Type'] != ''].index.values[0]
-    dyRight = (rightYOut-rightYIn)/(rightXOut-rightXIn)
-    rightYExt = (rightYIn + (dyRight * (end-rightXIn) * rightYIn))
+    if not data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
+        rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
+        rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
+        rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
+        rightXOut = data.loc[end:].loc[data['ZigZag Type'] != ''].index.values[0]
+        dyRight = (rightYOut-rightYIn)/(rightXOut-rightXIn)
+        rightYExt = (rightYIn + (dyRight * (end-rightXIn) * rightYIn))
+        extRightX = [len(dat_plot) - (end - rightXIn), len(dat_plot)]
+        extRightY = [rightYIn, rightYExt]    
+        plt.plot(extRightX, extRightY, linestyle = '--', color = 'b')
 
     extLeftX = [0, leftXIn - start]
     extLeftY = [leftYExt, leftYIn]
@@ -107,10 +121,13 @@ def plotCandlesWithZigZag(data, start, end, xtick_iter = 8, gridOn = False, tick
         ax.xaxis.set_minor_locator(MultipleLocator(1))
     plt.show()
 
-def plotCandlesWithZigZagABCD(data, start, end, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
+def plotCandlesWithZigZagABCD(data, start = 0, end = 0, xtick_iter = 8, gridOn = False, ticksOn = True, vertLineStamp = None):
 
     #Again, same as above but now includes the first column of ABCD mapping.
     #To do - check on the multiple mapping and incorporate here.
+
+    if start == 0 and end == 0:
+        end = len(data)
 
     dat_plot = data.iloc[start:end].reset_index(drop = True, inplace = False)
     x = np.arange(0, len(dat_plot))
