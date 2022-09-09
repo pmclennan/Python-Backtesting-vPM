@@ -1,9 +1,11 @@
 #Forward Looking
 import pandas as pd
+import numpy as np
 
 ## To DO - check on the threshold (1.61 +- 0.05)... only returned 1 
 
-def ABCD_mapping(dataWithZigZags):
+def ABCD_mapping(dataWithZigZags, thresholdMean = 0, thresholdVar = np.inf, labelSignal = 0):
+
 
     #At this stage this requires the data input from the format of ZigZag_mapping/ZigZagPoints
     #NB - this adjusts the input dataframe and does not return anything/a new dataframe
@@ -46,8 +48,8 @@ def ABCD_mapping(dataWithZigZags):
             #Dpx < Bpx
             #C Px > C(+1) High Px
             
-            #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
-            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
+            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'peak') and (Apx > Cpx > Dpx) and \
+                (thresholdMean - thresholdVar <= ABdiff/BCdiff <= thresholdMean + thresholdVar) and (Dpx < Bpx) and (Cnexthighpx < Cpx):
                 #Conditions met - find indices in main DF (B & D left) and insert labels
                 idxB = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+1]].index.values[0]
                 idxD = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+3]].index.values[0]
@@ -88,8 +90,8 @@ def ABCD_mapping(dataWithZigZags):
             #Dpx > Bpx
             #C Px > C(+1) Low Px
             
-            #if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (1.56 <= ABdiff/BCdiff <= 1.66) and (Dpx > Bpx) and (Cnextlowpx < Cpx):
-            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and (Dpx > Bpx) and (Cnextlowpx > Cpx):
+            if (dataWithZigZagsABCD['ZigZag Type'].iloc[i] == 'valley') and (Apx < Cpx < Dpx) and \
+                (thresholdMean - thresholdVar <= ABdiff/BCdiff <= thresholdMean + thresholdVar) and (Dpx > Bpx) and (Cnextlowpx < Cpx):
                 #Conditions met - find indices in main DF (B & D left) and insert labels
                 idxB = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+1]].index.values[0]
                 idxD = dataWithZigZagsABCD[dataWithZigZagsABCD['time'] == zigzagDF['time'].iloc[zz_idxA+3]].index.values[0]
@@ -122,5 +124,15 @@ def ABCD_mapping(dataWithZigZags):
                     dataWithZigZagsABCD['ABCD4'].iloc[idxB] = 'B'
                     dataWithZigZagsABCD['ABCD4'].iloc[idxC] = 'C'
                     dataWithZigZagsABCD['ABCD4'].iloc[idxD] = 'D'         
+
+    if labelSignal == 1:
+        signals = np.zeros(len(dataWithZigZagsABCD))
+        longIdxs = list(dataWithZigZagsABCD.loc[dataWithZigZagsABCD['ABCD1'] == 'C'].loc[dataWithZigZagsABCD['ZigZag Type'] == 'valley'].index.values)
+        shortIdxs = list(dataWithZigZagsABCD.loc[dataWithZigZagsABCD['ABCD1'] == 'C'].loc[dataWithZigZagsABCD['ZigZag Type'] == 'peak'].index.values)
+
+        signals[longIdxs] = 1
+        signals[shortIdxs] = -1
+
+        dataWithZigZagsABCD['Signal'] = signals
 
     return dataWithZigZagsABCD

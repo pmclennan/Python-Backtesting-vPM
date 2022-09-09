@@ -43,14 +43,14 @@ class signalHandlerLive:
         self.currAskPrice = askPrice
 
     def refreshAndCheck(self, bidPrice, askPrice):
-        #Not in use - see cmments under checkStpCondition
+        #Not in use - see comments under checkStpCondition
         self.refresh(bidPrice, askPrice)
         self.checkStopConditions(self.currBidPrice, self.currAskPrice)
 
     def handleSignal(self, signal):
         #Handles the simple (1, 0, -1) strategy result and calls other functions to do the rest of the work
         #That is, pick price target, set sl/tp etc
-        #And returns a dictionary ready to be formatted for MT5
+        #And returns a dictionary to be used for input into orderFormatter
 
         if signal == 1:
             self.buy()            
@@ -124,10 +124,12 @@ class signalHandlerLive:
         self.expectedStopLossPrice = None
         self.expectedTakeProfitPrice = None
 
-    def checkStopConditions(self):
-        ##NEED TO CONFIRM IF THIS IS ACTUALLY REQUIRED
-        ##Seems as if we can get away with auto sl/tp trigger in MT5
 
+## The below functions have been set up, but are not currently in use.
+# MT5 does implement sl/tp, and this is more convinient as it can be done in real-time (as opposed to waiting for the bar process)
+# as well simplicity to omit this requirement from the code.
+ 
+    def checkStopConditions(self):
         if self.prevTradedPosition == 1:
             self.currPL = self.prevTradedPrice - self.currBidPrice
 
@@ -138,8 +140,6 @@ class signalHandlerLive:
             self.closeTrade()
 
     def closeTrade(self):
-        #Also not in use... as above
-        
         if self.prevTradedPosition == 1:
             self.handleSignal(-1)
         

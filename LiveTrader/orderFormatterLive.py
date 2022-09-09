@@ -32,7 +32,6 @@ class orderFormatter:
             request = "No Request"
 
         elif self.inputAction[0:5] == "CLOSE":
-            self.action = mt5.TRADE_ACTION_DEAL
             if self.inputAction == "CLOSE LONG":
                 self.orderDirection = mt5.ORDER_TYPE_SELL
             elif self.inputAction == "CLOSE SHORT":

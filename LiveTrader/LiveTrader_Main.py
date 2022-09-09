@@ -1,7 +1,6 @@
 import MetaTrader5 as mt5
 import datetime
 import pytz
-import math
 from ratesTimeRange import ratesTimeRange
 import pandas as pd 
 from trading_strategies import parabolic_SAR

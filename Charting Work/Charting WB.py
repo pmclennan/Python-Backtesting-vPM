@@ -15,7 +15,7 @@ from candle_plotting_functions import *
 currency = 'EURUSD'
 frequency = mt5.TIMEFRAME_M15
 tz = pytz.utc
-start = datetime.datetime(year = 2022, month = 9, day = 1, tzinfo = tz)
+start = datetime.datetime(year = 2022, month = 8, day = 17, tzinfo = tz)
 end = datetime.datetime.now(tz = tz)
 
 login = 7075929
@@ -46,6 +46,6 @@ ZigZags1 = ZigZagPoints(data, depth, deviation, backstep, pipsize)
 
 #ABCD Mapping
 ZigZagsABCD1 = ZigZags1.copy()
-ABCD1 = ABCD_mapping(ZigZagsABCD1)
-#print(ABCD1.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
-plotCandlesWithZigZagABCD(ABCD1, 0, 200, 16, False, True, None)
+ABCD1 = ABCD_mapping(ZigZagsABCD1, 1.61, 0.5, 1)
+print(ABCD1.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
+plotCandlesWithZigZagABCD(ABCD1, 900, 1100, 16, False, True, None)
