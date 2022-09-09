@@ -1,0 +1,23 @@
+RNN_predictor
+Architecture Info
+Model: "sequential_5"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ simple_rnn_5 (SimpleRNN)    (None, 40)                1800      
+                                                                 
+ dense_25 (Dense)            (None, 64)                2624      
+                                                                 
+ dense_26 (Dense)            (None, 32)                2080      
+                                                                 
+ dense_27 (Dense)            (None, 8)                 264       
+                                                                 
+ dense_28 (Dense)            (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 6,777
+Trainable params: 6,777
+Non-trainable params: 0
+_________________________________________________________________
+RMSE: 0.0013
+Time Trained: 1478.0s

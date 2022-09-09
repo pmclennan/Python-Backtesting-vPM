@@ -14,6 +14,9 @@ import pytz
 import os
 from WeeklySummary import get_weekly_summary
 from TradeSummary import get_trade_summary
+#import keras.models
+from sklearn.preprocessing import MinMaxScaler
+import joblib
 
 #NB - need to import relevant strategies 
 from trading_strategies import macd_stochastic_crossover
@@ -22,24 +25,41 @@ from trading_strategies import three_rsp
 from trading_strategies import parabolic_SAR
 from trading_strategies import DonchianChannel_CCI
 from trading_strategies import DonchianChannel_CCI_SMA
-from trading_strategies import three_rsp
+#from trading_strategies import patrick_DL
+#from trading_strategies import patrick_indicatorDL
+#from trading_strategies import patrick_predictiveDL
 
 ## Initial setup
 tz = pytz.utc #UTC Timezone
-start_date = datetime.datetime(2021, 10, 13, tzinfo = tz) #Start Date - adjust as necessary
-end_date = datetime.datetime(2022, 10, 20, tzinfo = tz) #End Date - adjust as necessary
-data_filename = "EURUSD_M5_14102021_26082022.csv" #Data File - adjust per the relevant file
-data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\CombinedDatasets"
+start_date = datetime.datetime(2017, 9, 3, tzinfo = tz) #Start Date - adjust as necessary
+end_date = datetime.datetime(2021, 9, 2, tzinfo = tz) #End Date - adjust as necessary
+data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
+data_filename = "EURUSD.a_M1_201709040000_202109031210.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
 frequency_str = data_filename.split("_")[1] #Infer Frequency from Data File
 timeCol = 'DATETIME'
+timeCols = ['<DATE>', '<TIME>']
+
+# model_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\DL Models"
+# model_filename = "RNN_predictor 04-09-2022 14-17-37.h5"
+# model_loc = os.path.join(model_folder, model_filename)
+# scaler_filename = "RNN_predictor_scaler.save"
+# scaler_loc = os.path.join(model_folder, scaler_filename)
+# model = keras.models.load_model(model_loc)
+# scaler = joblib.load(scaler_loc)
+
 
 #Set up Data Read - Datasets should be located in directory/Datasets (per the DataPull export)
 data_file = os.path.join(data_folder, data_filename).replace('\\', '/')
 
 #Read data and handle dates
-full_data = pd.read_csv(data_file, parse_dates = [timeCol])
+#full_data = pd.read_csv(data_file, parse_dates = [timeCol])
 
+#Work with MT5 Symbols dataset
+full_data = pd.read_csv(data_file, sep = "\t", parse_dates = [timeCols])
+for oldCol in full_data.columns:
+    full_data.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '')}, inplace = True)
+full_data.drop(columns = ['TICKVOL', 'VOL', 'SPREAD'], inplace = True)
 
 #Handle inputs to strategies
 if 'ReplacedBidAsk' in full_data.columns:
@@ -73,14 +93,14 @@ take_profit = 1000
 start_idx = full_data.index[full_data[timeCol] >= start_date][0]
 start_idx_adj = (start_idx - input_row_size + 1) if (start_idx - input_row_size + 1) > 0 else 0
 end_idx =  (full_data.index[full_data[timeCol] <= end_date][-1]) if (full_data[timeCol].iloc[-1] >= end_date) else full_data.index[-1]
-data = full_data[start_idx_adj:end_idx]
+data = full_data[start_idx_adj:end_idx].reset_index(drop = True)
 
 #Adjust the start/end date accordingly to line up with the actual data used - just for file naming purposes
-start_date = data[timeCol].iloc[start_idx_adj+input_row_size]
-end_date = data[timeCol].iloc[end_idx-1]
+start_date = data[timeCol].iloc[input_row_size]
+end_date = data[timeCol].iloc[-1]
 
 #Instantiate Broker
-broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date)
+broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date, 1)
 
 #Some Initialization
 start_time = time.time() 
@@ -101,9 +121,15 @@ for _,row in data.iterrows():
     
     if len(inputs) == input_row_size:
 
-        strategy = three_rsp.ThreeRSP(pd.DataFrame(inputs)) #Change loaded strategy
-        signal, indicatorDf = strategy.run_3RSP() #And call respective strategy run function. NB now returns indicatorDF too.
+        #Vanilla indicator strategies
+        strategy = DonchianChannel_CCI.DC_CCI(pd.DataFrame(inputs))
+        signal, indicatorDf = strategy.run_DC_CCI() #And call respective strategy run function. NB now returns indicatorDF too.
         broker.storeSignalAndIndicators(signal, indicatorDf, index)
+
+        #DL Strategies
+        # strategy = patrick_predictiveDL.predictiveModel(pd.DataFrame(inputs), model, scaler) #Change loaded strategy        
+        # signal = strategy.run_predictiveDL() #And call respective strategy run function. 
+        # broker.storeSignalAndIndicators(signal, None, index)
 
         # Current Price
         current_price = row['close']
@@ -125,7 +151,7 @@ for _,row in data.iterrows():
             # Checking if stop loss or take profit is hit
             broker.checkStopConditions(bid_price, ask_price, index)
         else:
-            print("Unknown Signal")
+            print("Unknown Signal") 
             break
         broker.store_executed_price(bid_price, ask_price, index)
      
@@ -140,7 +166,7 @@ end_time = time.time()
 print("\nTime consumed: {}s".format(datetime.timedelta(seconds = end_time-start_time)))
 
 #Set up for export folders
-parent_dir = os.path.join(os.getcwd(), "backtests", "forMapping")
+parent_dir = os.path.join(os.getcwd(), "backtests", "4 Year Tests")
 child_dir = datetime.datetime.now().strftime("%d%m%y-%H%M%S") + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date()))
 subfolder = os.path.join(parent_dir, child_dir)
 os.mkdir(subfolder)

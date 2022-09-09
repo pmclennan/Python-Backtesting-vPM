@@ -5,7 +5,7 @@ import datetime
 
 class signalHandler:
 
-    def __init__(self,stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date):
+    def __init__(self,stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date, storeIndicators = 1):
         self.original_stop_loss = stop_loss
         self.original_take_profit = take_profit
         self.broker_cost = broker_cost
@@ -36,7 +36,10 @@ class signalHandler:
         self.take_profit_px = [""]*n
         self.current_action = ""
         self.data = data
-        self.indicatorDf = pd.DataFrame()
+
+        self.storeIndicators = storeIndicators
+        if self.storeIndicators == 1:
+            self.indicatorDf = pd.DataFrame()
         
         self.trades_total = 0
         self.trades_won = 0
@@ -118,10 +121,11 @@ class signalHandler:
         self.data['Take Profit'] = self.take_profit_px
 
         #Indicator DF
-        insertIdx = self.data.columns.get_loc('signal')
-        insertDF = self.indicatorDf.drop(columns = 'time')
-        for i in range(len(insertDF.columns)):
-            self.data.insert(loc = i + insertIdx, column = insertDF.columns.values[i], value = insertDF.iloc[:, i])
+        if self.storeIndicators == 1:
+            insertIdx = self.data.columns.get_loc('signal')
+            insertDF = self.indicatorDf.drop(columns = 'time')
+            for i in range(len(insertDF.columns)):
+                self.data.insert(loc = i + insertIdx, column = insertDF.columns.values[i], value = insertDF.iloc[:, i])
 
         return self.data
 
@@ -143,10 +147,11 @@ class signalHandler:
     
     # Used to store signal for final summary df
     def storeSignalAndIndicators(self, signal, indicatorDf, index):
-        if self.indicatorDf.empty:
-            self.indicatorDf = indicatorDf
-        else:
-            self.indicatorDf = self.indicatorDf.append(indicatorDf.iloc[-1], ignore_index=True)
+        if self.storeIndicators == 1:
+            if self.indicatorDf.empty:
+                self.indicatorDf = indicatorDf
+            else:
+                self.indicatorDf = self.indicatorDf.append(indicatorDf.iloc[-1], ignore_index=True)
         self.signal_list[index] = signal
         
     def store_executed_price(self, bid_price, ask_price, index):

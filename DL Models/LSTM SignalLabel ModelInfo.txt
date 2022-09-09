@@ -1,0 +1,21 @@
+LSTM SignalLabel
+Architecture Info
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm (LSTM)                 (None, 100)               46400     
+                                                                 
+ dense (Dense)               (None, 50)                5050      
+                                                                 
+ dense_1 (Dense)             (None, 10)                510       
+                                                                 
+ dense_2 (Dense)             (None, 3)                 33        
+                                                                 
+=================================================================
+Total params: 51,993
+Trainable params: 51,993
+Non-trainable params: 0
+_________________________________________________________________
+BCE: 1.9807
+Time Trained: 0s

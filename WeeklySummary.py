@@ -16,6 +16,8 @@ def get_weekly_summary(data, frequency_str):
         end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 7)]
     elif frequency_str == "H1":
         end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 6, hours = 23)]
+    elif frequency_str == "M1":
+        end_dates = [data['time'].iloc[0] + datetime.timedelta(days = 6, hours = 23, minutes = 59)]
 
     weeks = [1]
     for i in range(1, (n_days.days // 7) + 1):

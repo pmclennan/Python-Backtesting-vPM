@@ -12,10 +12,20 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
     firstTicksTime = ticksDat.iloc[0, 0]
 
     if firstRatesTime > firstTicksTime:
-        ticksDat = ticksDat[ticksDat[timeCol] >= firstRatesTime]
+        ticksDat = ticksDat[ticksDat[timeCol] >= firstRatesTime].reset_index(drop = True)
     else:
-        ratesDat = ratesDat[ratesDat[timeCol] >= firstTicksTime]
+        ratesDat = ratesDat[ratesDat[timeCol] >= firstTicksTime].reset_index(drop = True)
 
+    #Similar for last time in each
+
+    lastRatesTime = ratesDat.iloc[-1, 0]
+    lastTicksTime = ticksDat.iloc[-1, 0]
+
+    if lastRatesTime > lastTicksTime:
+        ratesDat = ratesDat[ratesDat[timeCol] <= lastTicksTime].reset_index(drop = True)
+    else:
+        ticksDat = ticksDat[ticksDat[timeCol] <= lastRatesTime].reset_index(drop = True)
+        
     #Replacement Policy:
         #1: Replace extreme (spread > 1000pips) & zeroes with spread average of past 5/forward 5 values
         #2: Replace extreme & missing bid/ask with close +- replacementSpread parameter        
@@ -50,9 +60,13 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
             else:
                 shiftFactor = 0
 
-            idxGroup = list(np.arange(idx-5+shiftFactor, idx)) + list(np.arange(idx+1, idx+6+shiftFactor))
-            avgBidSpread = round(np.mean(abs(concatDF.loc[idxGroup, 'BID'] - concatDF.loc[idxGroup,'CLOSE'])), 5)
-            avgAskSpread = round(np.mean(abs(concatDF.loc[idxGroup, 'ASK'] - concatDF.loc[idxGroup, 'CLOSE'])), 5)            
+            #idxGroup = list(np.arange(idx-5+shiftFactor, idx)) + list(np.arange(idx+1, idx+6+shiftFactor))
+            #Update to only capture rolling window where bid/ask is already present from MT5.
+            idxGroup = list(concatDF[~concatDF['BID'].isnull() & ~concatDF['ASK'].isnull()].iloc[idx-5+shiftFactor:idx].index.values) \
+                + list(concatDF[~concatDF['BID'].isnull() & ~concatDF['ASK'].isnull()].iloc[idx:idx+6+shiftFactor-1].index.values)
+
+            avgBidSpread = round(np.mean(concatDF.loc[idxGroup,'CLOSE'] - concatDF.loc[idxGroup, 'BID']), 5)
+            avgAskSpread = round(np.mean(concatDF.loc[idxGroup, 'ASK'] - concatDF.loc[idxGroup, 'CLOSE']), 5)            
             concatDF.loc[idx, 'BID'] = concatDF.loc[idx, 'CLOSE'] - avgBidSpread
             concatDF.loc[idx, 'ASK'] = concatDF.loc[idx, 'CLOSE'] + avgAskSpread
 
@@ -74,11 +88,11 @@ def ratesTicksConcatenator(ratesDat, ticksDat, floorFreq, ticksCleanFlag = 1, re
 
     return concatDF
 
-ratesDatFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\EURUSDM1_01012017-270822"
+ratesDatFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets"
 ticksDatFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets\\TicksDat"
 
-ticksFileName = "EURUSD.a_202110141713_202208262356.csv"
-ratesFileName = "EURUSD.a_M1_202001020000_202208262356.csv"
+ticksFileName = "EURUSD.a_BidAskTicks_202110141713_202209022356.csv"
+ratesFileName = "EURUSD.a_M1_202110130000_202209022356.csv"
 
 ratesDir = os.path.join(ratesDatFolder, ratesFileName)
 ticksDir = os.path.join(ticksDatFolder, ticksFileName)
