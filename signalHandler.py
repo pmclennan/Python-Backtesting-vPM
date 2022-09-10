@@ -84,11 +84,11 @@ class signalHandler:
         self.take_profit = self.original_take_profit
 
         #Count if trade is succesful or not
-        if PL > 0:
+        if round(PL, 5) > 0:
             self.trades_won += 1
-        elif PL < 0:
+        elif round(PL, 5) < 0:
             self.trades_lost += 1
-        elif PL == 0:
+        elif round(PL, 5) == 0:
             self.trades_tied += 1
         
     # Called every iteration to ADD stats into an array.

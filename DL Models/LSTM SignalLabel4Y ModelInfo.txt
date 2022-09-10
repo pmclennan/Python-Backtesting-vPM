@@ -1,0 +1,19 @@
+LSTM SignalLabel4Y
+Architecture Info
+Model: "sequential_3"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_3 (LSTM)               (None, 120)               65280     
+                                                                 
+ dropout_3 (Dropout)         (None, 120)               0         
+                                                                 
+ dense_3 (Dense)             (None, 3)                 363       
+                                                                 
+=================================================================
+Total params: 65,643
+Trainable params: 65,643
+Non-trainable params: 0
+_________________________________________________________________
+BCE: 0
+Time Trained: 21815.0s

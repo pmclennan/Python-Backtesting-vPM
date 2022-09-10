@@ -133,6 +133,6 @@ def ABCD_mapping(dataWithZigZags, thresholdMean = 0, thresholdVar = np.inf, labe
         signals[longIdxs] = 1
         signals[shortIdxs] = -1
 
-        dataWithZigZagsABCD['Signal'] = signals
+        dataWithZigZagsABCD['Signal'] = signals.astype('int')
 
     return dataWithZigZagsABCD

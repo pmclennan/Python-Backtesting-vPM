@@ -113,7 +113,7 @@ exportFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Pyth
 startDate = EURUSDM1_dat.iloc[0, 0]
 endDate = EURUSDM1_dat.iloc[-1, 0]
 
-exportName = "EURUSD_M1_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
+exportName = "EURUSD.a_M1_{}_{}.csv".format(startDate.strftime("%d%m%Y"), endDate.strftime("%d%m%Y")) 
 exportDir = os.path.join(exportFolder, exportName)
 
 EURUSDM1_dat.to_csv(exportDir, index = False)

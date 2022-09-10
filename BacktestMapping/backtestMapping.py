@@ -9,24 +9,21 @@ def backtestMapping(historyData, tradeData):
 
     mappingData = historyData.drop(columns = ['signal', 'action', 'position', 'P/L', 'Total profit', 'Executed price', 'Take Profit', 'Stop Loss'])
 
-    mappingList = [0] * len(historyData)
+    tradeData['SignalMapping'] = [0] * len(tradeData)
+    
+    #Profitable Longs as 1
+    tradeData['SignalMapping'].loc[(tradeData['Trade Type'] == 'buy') & (tradeData['Trade P/L'] > 0)] = 1
+    #Non-profitable longs as -1
+    tradeData['SignalMapping'].loc[(tradeData['Trade Type'] == 'buy') & (tradeData['Trade P/L'] < 0)] = -1
+    #Profitable shorts as -1
+    tradeData['SignalMapping'].loc[(tradeData['Trade Type'] == 'short') & (tradeData['Trade P/L'] > 0)] = -1
+    #Non profitable shorts as 1
+    tradeData['SignalMapping'].loc[(tradeData['Trade Type'] == 'short') & (tradeData['Trade P/L'] < 0)] = 1
 
-    for i in range(len(tradeData)-1):
-        insertIdx = historyData[historyData['time'] == tradeData.loc[i, 'Trade Open Time']].index.values[0]
-        
-        if tradeData.loc[i, 'Trade Type'] == 'buy':            
-            if tradeData.loc[i, 'Trade P/L'] > 0:
-                mappingList[insertIdx] = 1
-            elif tradeData.loc[i, 'Trade P/L'] < 0:
-                mappingList[insertIdx] = -1
-        
-        elif tradeData.loc[i, 'Trade Type'] == 'short':
-            if tradeData.loc[i, 'Trade P/L'] > 0:
-                mappingList[insertIdx] = -1
-            elif tradeData.loc[i, 'Trade P/L'] < 0:
-                mappingList[insertIdx] = 1
+    tradeData.rename(columns = {'Trade Open Time': 'time'}, inplace = True)
 
-    mappingData['SignalMapping'] = mappingList
+    mappingData = mappingData.merge(tradeData[['time', 'SignalMapping']], how = 'left', on = 'time')    
+    mappingData['SignalMapping'].fillna(0, inplace = True)
 
     return mappingData
 

@@ -3,6 +3,7 @@ import datetime
 import pandas as pd
 import numpy as np
 import pytz
+import os
 
 #My packages
 from ZigZag_mapping import ZigZagPoints
@@ -34,18 +35,55 @@ data.reset_index(inplace = True)
 
 ## Some examples
 
+
 #ZigZag Mapping
-dat_zigzag = data.copy().reset_index(drop = True)
-depth = 12
-deviation = 5
-backstep = 3
-pipsize = 1/10000
-ZigZags1 = ZigZagPoints(data, depth, deviation, backstep, pipsize)
-#print(ZigZags1[ZigZags1['ZigZag Type'] != ''])
-#plotCandlesWithZigZag(ZigZags1, 80, 180, 4, False, True, None)
+# dat_zigzag = data.copy().reset_index(drop = True)
+# depth = 12
+# deviation = 5
+# backstep = 3
+# pipsize = 1/10000
+# ZigZags1 = ZigZagPoints(data, depth, deviation, backstep, pipsize)
+# print(ZigZags1[ZigZags1['ZigZag Type'] != ''])
+# plotCandlesWithZigZag(ZigZags1, 80, 180, 4, False, True, None)
 
 #ABCD Mapping
-ZigZagsABCD1 = ZigZags1.copy()
-ABCD1 = ABCD_mapping(ZigZagsABCD1, 1.61, 0.5, 1)
-print(ABCD1.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
-plotCandlesWithZigZagABCD(ABCD1, 900, 1100, 16, False, True, None)
+#ZigZagsABCD1 = ZigZags1.copy()
+#ABCD1 = ABCD_mapping(ZigZagsABCD1, 1.61, 0.05, 1)
+#print(ABCD1.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
+#plotCandlesWithZigZagABCD(ABCD1, 900, 1100, 16, False, True, None)
+
+#With MT5 ZigZag Data
+dataFolder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Large Datasets"
+dataFilename = "EURUSDZigZagM1_2017v3.csv"
+dataDir = os.path.join(dataFolder, dataFilename)
+
+#Set up time period
+tz = pytz.utc
+start = datetime.datetime(year = 2022, month = 9, day = 8, tzinfo = tz)
+end = datetime.datetime.now(tz = tz)
+data = pd.read_csv(dataDir, sep = "\t", parse_dates = ["Date"])
+data['Date'] = data['Date'].dt.tz_localize(tz = tz)
+datTest = data.loc[data['Date'] >= start].loc[data['Date'] <= end].reset_index(drop = True)
+
+#Rename cols
+for column in datTest.columns:
+    datTest.rename(columns = {column: column.lower()}, inplace = True)
+datTest.rename(columns = {'buffer#0': "ZigZag Value", 'date': 'time'}, inplace = True)
+
+#Map ZigZags in format for plotting
+ZigZagTypes = [""] * len(datTest)
+peakIdx = datTest.loc[datTest['ZigZag Value'] == datTest['high']].index.values
+valleyIdx = datTest.loc[datTest['ZigZag Value'] == datTest['low']].index.values
+for idx in peakIdx:
+    ZigZagTypes[idx] = "peak"
+for idx in valleyIdx:
+    ZigZagTypes[idx] = "valley"
+datTest['ZigZag Type'] = ZigZagTypes    
+datTest.loc[datTest['ZigZag Value'] == 0, 'ZigZag Value'] = ''
+#plotCandlesWithZigZag(datTest, len(datTest)-200, len(datTest))
+
+ABCD2 = ABCD_mapping(datTest, 1.61, 0.05, 1)
+print(ABCD2.query("ABCD1 != '' or ABCD2 != '' or ABCD3 != '' or ABCD4 != ''"))
+plotCandlesWithZigZagABCD(ABCD2, len(ABCD2)-720, len(ABCD2), 30, False, False, None)
+
+print("Break Point")

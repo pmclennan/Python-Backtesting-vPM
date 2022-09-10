@@ -95,7 +95,7 @@ def plotCandlesWithZigZag(data, start = 0, end = 0, xtick_iter = 8, gridOn = Fal
         extLeftY = [leftYExt, leftYIn]        
         plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
     
-    if not data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
+    if not data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
         rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
         rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
         rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
@@ -106,14 +106,6 @@ def plotCandlesWithZigZag(data, start = 0, end = 0, xtick_iter = 8, gridOn = Fal
         extRightY = [rightYIn, rightYExt]    
         plt.plot(extRightX, extRightY, linestyle = '--', color = 'b')
 
-    extLeftX = [0, leftXIn - start]
-    extLeftY = [leftYExt, leftYIn]
-    extRightX = [len(dat_plot) - (end - rightXIn), len(dat_plot)]
-    extRightY = [rightYIn, rightYExt]
-    
-    plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
-    plt.plot(extRightX, extRightY, linestyle = '--', color = 'b')
-    
     plt.xticks(x[::xtick_iter], plot_tl[::xtick_iter], rotation = 45)
     if gridOn:
         plt.grid(which = 'both')
@@ -163,12 +155,13 @@ def plotCandlesWithZigZagABCD(data, start = 0, end = 0, xtick_iter = 8, gridOn =
     ABCD_y = list(dat_plot['ZigZag Value'][dat_plot['ABCD1'] != ''])
     ABCD_m = list(dat_plot['ABCD1'][dat_plot['ABCD1'] != ''])
     ABCD_t = list(dat_plot['ZigZag Type'][dat_plot['ABCD1'] != ''])
-    
+    yticksRange = max(plt.yticks()[0]) - min(plt.yticks()[0])
+
     for i in range(len(ABCD_x)):
         if ABCD_t[i] == 'peak':
-            plt.plot(ABCD_x[i], ABCD_y[i] + 0.0005, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
+            plt.plot(ABCD_x[i], ABCD_y[i] + 0.025 * yticksRange, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
         elif ABCD_t[i] == 'valley':
-            plt.plot(ABCD_x[i], ABCD_y[i] - 0.0005, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
+            plt.plot(ABCD_x[i], ABCD_y[i] - 0.025 * yticksRange, marker = '$' + ABCD_m[i] + '$', lw = 0, color = 'black')
 
     #Extrapolation for visualisation..
     if not data.loc[:start].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
@@ -182,7 +175,7 @@ def plotCandlesWithZigZagABCD(data, start = 0, end = 0, xtick_iter = 8, gridOn =
         extLeftY = [leftYExt, leftYIn]        
         plt.plot(extLeftX, extLeftY, linestyle = '--', color = 'b')
     
-    if not data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
+    if not data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].empty:
         rightYIn = data.loc[:end].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[-1]
         rightYOut = data.loc[end:].loc[data['ZigZag Type'] != '']['ZigZag Value'].iloc[0]
         rightXIn = data.loc[:end].loc[data['ZigZag Type'] != ''].index.values[-1]
