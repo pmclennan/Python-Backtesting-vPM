@@ -31,8 +31,8 @@ from trading_strategies import DonchianChannel_CCI_SMA
 
 ## Initial setup
 tz = pytz.utc #UTC Timezone
-start_date = datetime.datetime(2017, 9, 3, tzinfo = tz) #Start Date - adjust as necessary
-end_date = datetime.datetime(2021, 9, 2, tzinfo = tz) #End Date - adjust as necessary
+start_date = datetime.datetime(2019, 7, 7, tzinfo = tz) #Start Date - adjust as necessary
+end_date = datetime.datetime(2019, 7, 10, tzinfo = tz) #End Date - adjust as necessary
 data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
 data_filename = "EURUSD.a_M1_201709040000_202109031210.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
@@ -122,8 +122,8 @@ for _,row in data.iterrows():
     if len(inputs) == input_row_size:
 
         #Vanilla indicator strategies
-        strategy = DonchianChannel_CCI.DC_CCI(pd.DataFrame(inputs))
-        signal, indicatorDf = strategy.run_DC_CCI() #And call respective strategy run function. NB now returns indicatorDF too.
+        strategy = three_rsp.ThreeRSP(pd.DataFrame(inputs))
+        signal, indicatorDf = strategy.run_3RSP() #And call respective strategy run function. NB now returns indicatorDF too.
         broker.storeSignalAndIndicators(signal, indicatorDf, index)
 
         #DL Strategies
@@ -166,7 +166,7 @@ end_time = time.time()
 print("\nTime consumed: {}s".format(datetime.timedelta(seconds = end_time-start_time)))
 
 #Set up for export folders
-parent_dir = os.path.join(os.getcwd(), "backtests", "4 Year Tests")
+parent_dir = os.path.join(os.getcwd(), "backtests")
 child_dir = datetime.datetime.now().strftime("%d%m%y-%H%M%S") + ("_{}_{}__{}_to_{}".format(currency, frequency_str, start_date.date(), end_date.date()))
 subfolder = os.path.join(parent_dir, child_dir)
 os.mkdir(subfolder)

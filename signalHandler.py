@@ -69,7 +69,7 @@ class signalHandler:
         #Count in total trades
         self.trades_total += 1
 
-        # Reseting Current position,action AND toal profit
+        # Reseting Current position,action AND total profit
         if self.prev_traded_position == -1:
             self.current_action = "close short"
         elif self.prev_traded_position == 1:
@@ -84,6 +84,7 @@ class signalHandler:
         self.take_profit = self.original_take_profit
 
         #Count if trade is succesful or not
+        #NB Rounding to handle Floating Point Error
         if round(PL, 5) > 0:
             self.trades_won += 1
         elif round(PL, 5) < 0:
