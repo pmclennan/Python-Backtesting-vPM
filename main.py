@@ -7,7 +7,7 @@ from collections import deque
 from signalHandler import signalHandler
 from visualise import visualise
 from trading_strategy import trading_strategy
-from MT5DataPuller import MT5DataPuller
+from DataFunctions.MT5DataPuller import MT5DataPuller
 import MetaTrader5 as mt5
 import datetime
 import pytz
