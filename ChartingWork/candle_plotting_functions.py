@@ -53,6 +53,8 @@ def plotCandlesWithZigZag(data, start = 0, end = 0, xtick_iter = 8, gridOn = Fal
     if start == 0 and end == 0:
         end = len(data)
 
+    data.loc[data['ZigZag Value'] == 0, ['ZigZag Value', 'ZigZag Type']] = '' #Hack to allow zeros to work
+
     dat_plot = data.iloc[start:end].reset_index(drop = True, inplace = False)
     x = np.arange(0, len(dat_plot))
     plot_tl = [str(dat_plot['time'].dt.date.iloc[x]) + " " + str(dat_plot['time'].dt.time.iloc[x]) for x in range(0, len(dat_plot))]
