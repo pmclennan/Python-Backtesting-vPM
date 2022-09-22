@@ -18,6 +18,8 @@ def ABCD_mapping(dataWithZigZags, thresholdMean = 0, thresholdVar = np.inf, labe
     #This can result in the mapping being like [A, B, A, B, C, D] - that is, a new ABCD is mapped over a current one in progress.
     #Need to check this but for now have split this into 4 columns.
 
+    dataWithZigZags.loc[dataWithZigZags['ZigZag Value'] == 0, ['ZigZag Value', 'ZigZag Type']] = '' #Handle blanks as zeros
+
     dataWithZigZagsABCD = dataWithZigZags.copy()
 
     zigzagDF = dataWithZigZagsABCD[dataWithZigZagsABCD['ZigZag Type'] != ''][['time', 'ZigZag Type', 'ZigZag Value']].copy().reset_index(drop = True)
