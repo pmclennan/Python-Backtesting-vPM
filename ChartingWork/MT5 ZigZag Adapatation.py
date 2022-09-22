@@ -4,6 +4,17 @@ import MetaTrader5 as mt5
 import pytz
 import os
 
+'''
+ZigZag Indicator calculation process following the method that the MetaTrader 5 indicator uses.
+For more context, please review the MQL5 code behind the ZigZag indicator.
+
+An important point to note is that MT5 seems to look back to the start of the previous year to beging calculating the ZigZags.
+So this functionality does that first, then starts the process of calculating each bar in the input range individually - shown in .run().
+
+This has been set up as a class to keep a 'global' i index which MT5 seems to keep as well as other indexing variables (shift, back etc)
+that are carried across different parts of the process.
+'''
+
 class ZigZagIndicator:
     def __init__(self, InpDepth = 12, InpDeviation = 5, InpBackstep = 3):
         
@@ -42,22 +53,25 @@ class ZigZagIndicator:
 
         self.high = None
         self.low = None
-        
-        #MT5
-        self.login = 7075929
-        self.password = 'ULP3jJgr'
-        self.server = 'ICMarkets-MT5-2'
 
-    def overrideMT5Auth(self, login, password, server):
+        self.login = None
+        self.password = None
+        self.password = None
+        
+    def setMT5Auth(self, login, password, server):
         self.login = login
         self.password = password
         self.server = server
+        
+        mt5.initialize()
+        auth = mt5.login(login = self.login, password = self.password, server = self.server)
+        print('\n-----MT5 Connection Status------')
+        print("Auth Status:", auth)
+        print("Log:", mt5.last_error())
+        print("Account/Connection Info:", mt5.account_info()._asdict())
 
     def pullData(self, currency, frequency, startDate, endDate):
         #Seems that MT5 uses start of previous year to base the ZigZag
-
-        mt5.initialize()
-        mt5.login(login = self.login, password = self.password, server = 'ICMarkets-MT5-2')
        
         if endDate.hour == 0 and endDate.minute == 0:
             endDate = endDate - datetime.timedelta(minutes = 1)
@@ -299,12 +313,12 @@ class ZigZagIndicator:
 
     def finaliseResults(self, fullFlag):
 
-        self.currData['ZigZagValue'] = self.ZigZagBuffer
+        self.currData['ZigZag Value'] = self.ZigZagBuffer
 
-        self.currData['ZigZagType'] = [''] * len(self.currData)
+        self.currData['ZigZag Type'] = [''] * len(self.currData)
 
-        self.currData.loc[self.currData['ZigZagValue'] == self.currData['high'], 'ZigZagType'] = 'Peak'
-        self.currData.loc[self.currData['ZigZagValue'] == self.currData['low'], 'ZigZagType'] = 'Peak'
+        self.currData.loc[self.currData['ZigZag Value'] == self.currData['high'], 'ZigZag Type'] = 'peak'
+        self.currData.loc[self.currData['ZigZag Value'] == self.currData['low'], 'ZigZag Type'] = 'valley'
 
         self.testDataFinal = self.currData.loc[(self.currData['time'] >= startDate) & (self.currData['time'] <= endDate)].reset_index(drop = True)
         
@@ -334,7 +348,12 @@ startDate = datetime.datetime(2022, 9, 1, tzinfo = pytz.utc)
 endDate = datetime.datetime(2022, 9, 23, tzinfo = pytz.utc)
 
 o = ZigZagIndicator()
-ZigZagDat = o.run('EURUSD.a', mt5.TIMEFRAME_M1, startDate, endDate)
+o.setMT5Auth(50950826, 'pwqC1Mx3', 'ICMarkets-Demo')
+ZigZagDat = o.run('EURUSD', mt5.TIMEFRAME_M1, startDate, endDate, 1)
 
+#exportFolder = os.path.join(os.getcwd(), 'ChartingWork')
+#exportFileName = 'EURUSDM1_ZigZag_010922-220922.csv'
+#exportDir = os.path.join(exportFolder, exportFileName)
+#ZigZagDat.to_csv(exportDir, index = False)
 
 print("DebugPoint")
