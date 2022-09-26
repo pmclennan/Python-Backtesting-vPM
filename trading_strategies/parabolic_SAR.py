@@ -34,7 +34,7 @@ class pSAR:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'pSAR']]
 
-    def run_pSAR(self):
+    def run(self):
         self.add_pSAR()
         self.addIndicatorDf()
         

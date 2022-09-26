@@ -57,7 +57,7 @@ class DC_CCI_SMA:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'CCI', 'D_UC', 'D_LC', 'D_MC', 'SMA']]
 
-    def run_DC_CCI_SMA(self):
+    def run(self):
         self.add_CCI()
         self.add_DC()
         self.add_SMA()

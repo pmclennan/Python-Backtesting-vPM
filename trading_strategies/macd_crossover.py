@@ -54,7 +54,7 @@ class MACDCrossover:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'macd_line', 'macd_signal']]
 
-    def run_macd_crossover(self):
+    def run(self):
         self.add_macd_line()
         self.add_macd_signal_line()
         self.addIndicatorDf()

@@ -72,7 +72,7 @@ class ThreeRSP:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'pSAR', 'RSI', 'slow_k', 'slow_d']]
 
-    def run_3RSP(self):
+    def run(self):
         self.calculate_pSAR()
         self.calculate_RSI()
         self.calculate_SO()

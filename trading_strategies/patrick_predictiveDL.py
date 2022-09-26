@@ -4,13 +4,14 @@ import ta
 from sklearn.preprocessing import MinMaxScaler
 
 class predictiveModel:
-    def __init__(self, data, model, scaler):
-        self.data = data
+    def __init__(self, model, scaler):
         self.model = model
         self.scaler = scaler
         self.sequence_length = self.model.input_shape[1]
         self.scaled_data = None
-        self.input = None
+
+    def feed_input_data(self, data):
+        self.data = data
 
     def clean_columns(self):
         self.data = self.data[['open', 'high', 'low', 'close']]
@@ -23,13 +24,10 @@ class predictiveModel:
         self.scaled_data = X
 
     def sequence_input(self):
-        X = []
-        for i in range(0, len(self.data) - self.sequence_length):
-            end = i + self.sequence_length
-            X.append(self.data.iloc[i:end])
-
+        #Using just one observation 
+        X = self.scaled_data[len(self.scaled_data) - self.sequence_length:]
         X = np.array(X)
-        X = np.reshape(X[-1], (1, X[-1].shape[0], X[-1].shape[1]))
+        X = np.reshape(X, (1, X.shape[0], X.shape[1]))
 
         self.input_sequence = X  
                     
@@ -37,7 +35,7 @@ class predictiveModel:
 
         action = 0
 
-        prediction = self.model.predict(self.input_sequence)
+        prediction = self.model.predict(self.input_sequence, verbose = 0)
         prediction = prediction[0][0]
 
         if prediction > self.data['close'].iloc[-1]:

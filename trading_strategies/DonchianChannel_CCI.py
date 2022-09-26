@@ -42,7 +42,7 @@ class DC_CCI:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'CCI', 'D_UC', 'D_LC']]
 
-    def run_DC_CCI(self):
+    def run(self):
         self.add_CCI()
         self.add_DC()
         self.addIndicatorDf()

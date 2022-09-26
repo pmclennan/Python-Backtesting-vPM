@@ -75,7 +75,7 @@ class MACDStochasticCrossover:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'macd_line', 'macd_signal', 'stoch_line', 'stoch_signal']]
 
-    def run_macd_stochastic_crossover(self):
+    def run(self):
         self.add_macd_line()
         self.add_macd_signal()
         self.add_stochastic_line()
