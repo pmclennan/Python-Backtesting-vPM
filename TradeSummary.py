@@ -29,7 +29,7 @@ def get_trade_summary(data):
 
     trades_summary_df.drop(columns = ['Open PnL', 'Close PnL'], inplace = True)
 
-    if len(trades_summary_df.loc[trades_summary_df['Trade Open Time'] < trades_summary_df['Trade Close Time']]):
+    if len(trades_summary_df.loc[trades_summary_df['Trade Open Time'] > trades_summary_df['Trade Close Time']]):
         raise Exception('Trade summary does not reconcile - Trades are recorded as closing before they have opened.')
 
     return trades_summary_df
