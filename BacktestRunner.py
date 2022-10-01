@@ -82,7 +82,13 @@ class BacktestRunner:
     def loadBroker(self, stopLoss, takeProfit, guaranteedSl, brokerCost):
         self.broker = self.broker(stopLoss, takeProfit, guaranteedSl, brokerCost, self.data, self.currency, self.startDate, self.endDate, self.storeIndicators)
     
-    def runBacktest(self, DL = False):
+    def runBacktest(self, runType = 1):
+        '''
+        Types:
+        1 - standard indicator strategy. Instantiate with Data.
+        2 - Deep Learning - requires model/scaler input
+        3 - ZigZag - requires preliminary data upon instantiation before input into backtest. New data is loaded in "Run"
+        '''
 
         startTime = time.time()
         index = 0
@@ -97,14 +103,20 @@ class BacktestRunner:
             self.inputs.append(row)
             if len(self.inputs) == self.inputRowSize:
 
-                if not DL:
+                if runType == 1:
                     #Vanilla indicator strategies
                     strategy = self.strategyType(pd.DataFrame(self.inputs))
                     signal, indicatorDf = strategy.run()
                     self.broker.storeSignalAndIndicators(signal, indicatorDf, index)          
 
-                else:
+                elif runType == 2:
                     print("TODO: Add DL Functionality")
+                
+                elif runType == 3:
+                    if index >= 1261:
+                        print("DebugPoint")
+                    signal = self.strategyType.run(pd.DataFrame(self.inputs))
+                    self.broker.storeSignalAndIndicators(signal, None, index)          
 
                 currentPrice = row['close']
 
@@ -184,31 +196,3 @@ class BacktestRunner:
                 visualiser.plotFig(plotDir = None, show_plot = showPlot)
 
         print("Exports finalised\n", summaryData)
-
-tz = pytz.utc
-startDate = datetime.datetime(2017, 9, 3, tzinfo = tz) #Start Date - adjust as necessary
-endDate = datetime.datetime(2021, 9, 4, tzinfo = tz) #End Date - adjust as necessary
-dataFolder = "C:\\Users\\ServerUser\\Documents\\Repos\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
-dataFilename = "EURUSD.a_M1_201709040000_202109031210.csv"
-dataDir = os.path.join(dataFolder, dataFilename)
-timeCols = ['<DATE>', '<TIME>']
-
-one_pip = 0.0001
-stop_loss = -25*one_pip
-take_profit = 50*one_pip
-guaranteed_sl = False
-broker_cost = 2*one_pip
-
-stratTypes = [three_rsp.ThreeRSP, parabolic_SAR.pSAR, macd_stochastic_crossover.MACDStochasticCrossover, \
-    macd_crossover.MACDCrossover, DonchianChannel_CCI.DC_CCI, DonchianChannel_CCI_SMA.DC_CCI_SMA]
-exportFolder = "C:\\Users\\ServerUser\\Documents\\Repos\\Large Files\\4 Year Tests"
-
-for stratType in stratTypes:
-    print("Running for ", stratType)
-    Backtest = BacktestRunner(startDate, endDate, 50, stratType, exportFolder)
-    Backtest.readAndPrepData(dataDir, "\t", timeCols)
-    Backtest.loadBroker(stop_loss, take_profit, guaranteed_sl, broker_cost)
-    Backtest.runBacktest()
-    Backtest.runReports()
-
-print("DEBUG POINT")
