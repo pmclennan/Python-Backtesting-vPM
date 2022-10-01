@@ -5,10 +5,6 @@ import MetaTrader5 as mt5
 import pytz
 import os
 import sys
-import time
-
-sys.path.append(os.getcwd())
-from UtilsPM.DataReaders import MT5SymbolsDataReader
 
 '''
 ZigZag Indicator calculation process following the method that the MetaTrader 5 indicator uses.
@@ -79,12 +75,13 @@ class ZigZagWriter:
         self.currData = self.prelimData[['time', 'open', 'high', 'low', 'close', 'ZigZag Value', 'HighMapBuffer', 'LowMapBuffer']]
         
     def appendDataByOne(self, inputData):
+        
         self.currData = self.currData.append(inputData, ignore_index = True)
         self.ZigZagBuffer.append(0)
         self.HighMapBuffer.append(0)
         self.LowMapBuffer.append(0)
 
-        #Handle CurrData getting too large - trim to start of prev year (like MT5) along with buffers
+        #Handle CurrData getting too large - trim to 2 years along with buffers
         startPeriod = datetime.datetime(self.currData['time'].iloc[-1].year-1, 1, 1, tzinfo = pytz.utc)
         self.currData = self.currData.loc[self.currData['time'] >= startPeriod]
         idx = self.currData.index[0]
