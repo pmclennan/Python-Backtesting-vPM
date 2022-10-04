@@ -5,18 +5,27 @@ import datetime
 
 class signalHandler:
 
-    def __init__(self,stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date, storeIndicators = 1):
+    def __init__(self, stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, frequency, start_date, end_date, storeIndicators = 1):
+        
         self.original_stop_loss = stop_loss
         self.original_take_profit = take_profit
+        self.guaranteed_sl = guaranteed_sl
         self.broker_cost = broker_cost
+        self.data = data
         self.stop_loss = stop_loss
         self.take_profit = take_profit
-        self.guaranteed_sl = guaranteed_sl
+        self.currency = currency
+        self.frequency = frequency
+        self.start_date = start_date
+        self.end_date = end_date                
+        self.storeIndicators = storeIndicators
+        if self.storeIndicators == 1:
+            self.indicatorDf = pd.DataFrame()        
 
         self.prev_traded_position = 0
         self.prev_traded_price = None
-
         self.total_profit = 0
+
         data['signal'] = ''
         data['action'] = ''
         data['position'] = ''
@@ -25,6 +34,7 @@ class signalHandler:
         data['Executed price'] = ''
         data['Take Profit'] = ''
         data['Stop Loss'] = ''
+
         n = len(data)
         self.signal_list = [""]*n
         self.action = [""]*n
@@ -35,19 +45,11 @@ class signalHandler:
         self.stop_loss_px = [""]*n
         self.take_profit_px = [""]*n
         self.current_action = ""
-        self.data = data
-
-        self.storeIndicators = storeIndicators
-        if self.storeIndicators == 1:
-            self.indicatorDf = pd.DataFrame()
         
         self.trades_total = 0
         self.trades_won = 0
         self.trades_lost = 0
-        self.trades_tied = 0
-        self.currency = currency
-        self.start_date = start_date
-        self.end_date = end_date
+        self.trades_tied = 0       
         self.summary_df = pd.DataFrame()
 
     ############### Helpers ###############
@@ -135,6 +137,7 @@ class signalHandler:
         self.summary_df['Start'] = [self.start_date.strftime("%Y-%m-%d %H:%S")]
         self.summary_df['End'] = self.end_date.strftime("%Y-%m-%d %H:%S")
         self.summary_df['Currency Pair'] = [self.currency]
+        self.summary_df['Frequency'] = [self.frequency]
         self.summary_df['Total Trades'] = [self.trades_total]
         self.summary_df['Total P/L'] = [self.arr_total_profit[-1]]
         self.summary_df['Total P/L (pips)'] = [self.arr_total_profit[-1] * 10000]
@@ -177,11 +180,11 @@ class signalHandler:
             # Reciving a stroger buy signal
             self.checkStopConditions(bid_price, ask_price, index)
             #Recalibrate SL/TP if still short after checking stop - Check Matloob
-            if self.current_action == "buy":
-                self.take_profit += self.original_take_profit
-                self.stop_loss += self.original_take_profit
-                self.stop_loss_px[index] = self.prev_traded_price + self.stop_loss
-                self.take_profit_px[index] = self.prev_traded_price + self.take_profit
+            # if self.current_action == "buy":
+            #     self.take_profit += self.original_take_profit
+            #     self.stop_loss += self.original_take_profit
+            #     self.stop_loss_px[index] = self.prev_traded_price + self.stop_loss
+            #     self.take_profit_px[index] = self.prev_traded_price + self.take_profit
 
         elif self.prev_traded_position == -1:
             self.current_action = "close short"
