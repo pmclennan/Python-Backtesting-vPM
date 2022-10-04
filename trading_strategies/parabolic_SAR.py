@@ -2,7 +2,12 @@ import pandas as pd
 import ta
 
 class pSAR:
-    def __init__(self, data):
+    def __init__(self):
+
+        self.Name = 'pSAR'
+        self.indicatorDf = None
+
+    def addData(self, data):
         
         self.df = data
         self.high = self.df['high']
@@ -10,9 +15,7 @@ class pSAR:
         self.close = self.df['close']
         
         self.df['pSAR'] = [0] * len(self.df)
-
-        self.indicatorDf = None
-
+    
     def add_pSAR(self):
         self.df["pSAR"] = ta.trend.PSARIndicator(high = self.high, low = self.low, close = self.close, step = 0.02, max_step = 0.2).psar()
         self.pSAR = self.df['pSAR']
@@ -34,7 +37,8 @@ class pSAR:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'pSAR']]
 
-    def run(self):
+    def run(self, data):
+        self.addData(data)
         self.add_pSAR()
         self.addIndicatorDf()
         

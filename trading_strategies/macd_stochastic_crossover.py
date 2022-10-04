@@ -9,9 +9,14 @@ import ta
 import numpy as np
 
 class MACDStochasticCrossover:
-    def __init__(self, data):
-        self.df = data
-        # self.df = pd.DataFrame(inputs)
+    def __init__(self):
+        
+        self.Name = "MACD_SCO"
+        self.indicatorDf = None
+
+    def addData(self, data):
+        self.df = data        
+        
         self.close = self.df['close']
         self.high = self.df['high']
         self.low = self.df['low']
@@ -20,9 +25,7 @@ class MACDStochasticCrossover:
         self.df['macd_signal'] = [0] * len(data)
         self.df['stoch_line'] = [0] * len(data)
         self.df['stoch_signal'] = [0] * len(data)
-
-        self.indicatorDf = None
-
+    
     # calculates the macd line
     def add_macd_line(self):
         self.df['macd_line'] = ta.trend.MACD(close=self.close).macd()
@@ -46,7 +49,6 @@ class MACDStochasticCrossover:
         m_signal = self.df['macd_signal']
         k_line = self.df['stoch_line']
         d_signal = self.df['stoch_signal']
-
 
         action = 0
 
@@ -75,7 +77,8 @@ class MACDStochasticCrossover:
     def addIndicatorDf(self):
         self.indicatorDf = self.df[['time', 'macd_line', 'macd_signal', 'stoch_line', 'stoch_signal']]
 
-    def run(self):
+    def run(self, data):
+        self.addData(data)
         self.add_macd_line()
         self.add_macd_signal()
         self.add_stochastic_line()
