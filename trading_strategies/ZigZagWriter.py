@@ -76,7 +76,7 @@ class ZigZagWriter:
         
     def appendDataByOne(self, inputData):
         
-        self.currData = self.currData.append(inputData, ignore_index = True)
+        self.currData = pd.concat([self.currData, inputData], ignore_index = True)
         self.ZigZagBuffer.append(0)
         self.HighMapBuffer.append(0)
         self.LowMapBuffer.append(0)
