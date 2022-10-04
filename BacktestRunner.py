@@ -13,12 +13,16 @@ from WeeklySummary import get_weekly_summary
 from TradeSummary import get_trade_summary
 from visualise import visualise
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #Mute cuda warnings
+import tensorflow as tf 
+import keras.models
+
 from trading_strategies import macd_stochastic_crossover, macd_crossover, three_rsp
 from trading_strategies import parabolic_SAR, DonchianChannel_CCI, DonchianChannel_CCI_SMA
 
 class BacktestRunner:
 
-    def __init__(self, startDate, endDate, inputRowSize, strategyType, exportParentFolder, storeIndicators = 1):
+    def __init__(self, startDate, endDate, inputRowSize, strategy, exportParentFolder, storeIndicators = 1):
 
         #Data Preparation attributes
         self.startDate = startDate
@@ -34,10 +38,12 @@ class BacktestRunner:
 
         #Backtesting functionality
         self.broker = signalHandler
-        self.strategyType = strategyType
+        self.strategy = strategy
         self.storeIndicators = storeIndicators
 
     def readAndPrepData(self, dataDir, delimitter, timeCols):
+        #I prefer to have the functionality of reading the data here, so we can infer report items (currency, timeframe)
+        #etc from the filename. 
 
         #Set up export filename details
         if "/" in dataDir:
@@ -48,13 +54,16 @@ class BacktestRunner:
         self.frequencyStr = dataFilename.split("_")[1]
 
         #Read data
-        fullData = pd.read_csv(dataDir, sep = delimitter, parse_dates = [timeCols])
+        if delimitter is not None:
+            fullData = pd.read_csv(dataDir, sep = delimitter, parse_dates = [timeCols])
+        else:
+            fullData = pd.read_csv(dataDir, parse_dates = [timeCols])
 
         #Rename/standardize columns as well as localizing time
-        for oldCol in fullData.columns:
-            fullData.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '').lower()}, inplace = True)
-        
         fullData.rename(columns = {fullData.columns[0]: 'time'}, inplace = True)
+        for oldCol in fullData.columns:
+            fullData.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '').lower()}, inplace = True)            
+                
         fullData['time'] = fullData['time'].dt.tz_localize(tz = pytz.utc)
 
         if 'bid' in fullData and 'ask' in fullData:
@@ -64,7 +73,8 @@ class BacktestRunner:
             fullData = fullData[['time', 'open', 'high', 'low', 'close']]
         
         #Flag any errors with date inputs
-        if self.startDate >= fullData['time'].iloc[-1] or self.startDate > self.endDate:
+        if self.startDate >= fullData['time'].iloc[-1] or self.startDate > self.endDate or self.endDate <= fullData['time'].iloc[0]:
+            print("Date Input error - data dates vs input dates noted below:")
             print("Input start date: {} | Input end date: {}".format(self.startDate, self.endDate))
             print("Data start date : {} | Data end date:  {}".format(fullData['time'].iloc[0], fullData['time'].iloc[-1]))
             raise Exception ("Input time does not work with data dates - please review input dates or dataset")
@@ -80,19 +90,24 @@ class BacktestRunner:
         self.endDate = self.data['time'].iloc[-1]        
 
     def loadBroker(self, stopLoss, takeProfit, guaranteedSl, brokerCost):
-        self.broker = self.broker(stopLoss, takeProfit, guaranteedSl, brokerCost, self.data, self.currency, self.startDate, self.endDate, self.storeIndicators)
+        self.broker = self.broker(stopLoss, takeProfit, guaranteedSl, brokerCost, self.data, self.currency, self.frequencyStr, \
+            self.startDate, self.endDate, self.storeIndicators)
     
     def runBacktest(self, runType = 1):
         '''
         Types:
-        1 - standard indicator strategy. Instantiate with Data.
-        2 - Deep Learning - requires model/scaler input
+        1 - standard indicator strategy. Returns indicator DF.
+        2 - Deep Learning - requires model/scaler upon instantiation before input into backtest (otherwise timely)
         3 - ZigZag - requires preliminary data upon instantiation before input into backtest. New data is loaded in "Run"
         '''
-
         startTime = time.time()
         index = 0
         signal = 0
+
+        if (runType == 2 or runType == 3) and self.storeIndicators == 1:
+            print("Note: Indicators can't be saved with history for runType 2 (DL) or 3 (Charting at this stage) - Overriding this setting.")
+            self.storeIndicators = 0
+            self.broker.storeIndicators = 0 #Yes I know this should be a setter method
 
         #Set up Iteration and print commencing statement
         print("Commencing Backtest")
@@ -105,17 +120,16 @@ class BacktestRunner:
 
                 if runType == 1:
                     #Vanilla indicator strategies
-                    strategy = self.strategyType(pd.DataFrame(self.inputs))
-                    signal, indicatorDf = strategy.run()
+                    strategy = self.strategy()
+                    signal, indicatorDf = strategy.run(pd.DataFrame(self.inputs))
                     self.broker.storeSignalAndIndicators(signal, indicatorDf, index)          
 
                 elif runType == 2:
-                    print("TODO: Add DL Functionality")
+                    signal = self.strategy.run(pd.DataFrame(self.inputs))
+                    self.broker.storeSignalAndIndicators(signal, None, index)          
                 
                 elif runType == 3:
-                    if index >= 1261:
-                        print("DebugPoint")
-                    signal = self.strategyType.run(pd.DataFrame(self.inputs))
+                    signal = self.strategy.run(pd.DataFrame(self.inputs))
                     self.broker.storeSignalAndIndicators(signal, None, index)          
 
                 currentPrice = row['close']
@@ -135,8 +149,7 @@ class BacktestRunner:
                 elif signal == 0:
                     self.broker.checkStopConditions(bidPrice, askPrice, index)
                 else:
-                    print("Unknown Signal!")
-                    break
+                    raise Exception ("Unknown Signal!")
 
                 self.broker.store_executed_price(bidPrice, askPrice, index)
 
@@ -144,16 +157,23 @@ class BacktestRunner:
 
             #Show progress
             if index % (round(0.01 * len(self.data), 0)) == 0:
-                print("Backtest Progress:", round(100 * (index/len(self.data))), "%", end = "\r", flush = True)
+                print("Backtest Progress: {}% as at date: {} | PnL: {} pips | Total Trades: {}".format(\
+                    round(100 * (index/len(self.data))), row['time'].strftime("%Y-%m-%d %H:%M"), round(self.broker.total_profit * 10000, 0), self.broker.trades_total), \
+                        end = "\r", flush = True)
 
         endTime = time.time()
         print("\nTimeConsumed: {}".format(datetime.timedelta(seconds = endTime - startTime)))
 
-    def runReports(self, savePlot = False, showPlot = False):
+    def runReports(self, suffix = None, savePlot = False, showPlot = False):
         
-        #Folder setup
+        #Folder setup       
         childDir = datetime.datetime.now().strftime("%d%m%y-%H%M%S") + ("_{}_{}__{}_to_{}".format(
             self.currency, self.frequencyStr, self.startDate.date(), self.endDate.date()))
+        if suffix is not None:
+            childDir = childDir + "_" + str(suffix)
+        if hasattr(self.strategy(), 'Name'):
+            childDir = self.strategy().Name + "_" + childDir
+
         subfolder = os.path.join(self.exportParentFolder, childDir)
         os.mkdir(subfolder)
 
@@ -165,7 +185,6 @@ class BacktestRunner:
 
         #Summary
         summaryData = self.broker.getSummary()
-        summaryData.insert(loc = 3, column = 'Frequency', value = self.frequencyStr)
         summaryFilename = "Summary.csv"
         summaryDir = os.path.join(subfolder, summaryFilename).replace('\\', '/')
 
