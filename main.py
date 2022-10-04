@@ -14,7 +14,7 @@ import pytz
 import os
 from WeeklySummary import get_weekly_summary
 from TradeSummary import get_trade_summary
-#import keras.models
+import keras.models
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 
@@ -27,23 +27,23 @@ from trading_strategies import DonchianChannel_CCI
 from trading_strategies import DonchianChannel_CCI_SMA
 #from trading_strategies import patrick_DL
 #from trading_strategies import patrick_indicatorDL
-#from trading_strategies import patrick_predictiveDL
+from trading_strategies import patrick_predictiveDL
 
 ## Initial setup
 tz = pytz.utc #UTC Timezone
-start_date = datetime.datetime(2019, 7, 7, tzinfo = tz) #Start Date - adjust as necessary
-end_date = datetime.datetime(2019, 7, 10, tzinfo = tz) #End Date - adjust as necessary
-data_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\Datasets\\Symbols Method"
-data_filename = "EURUSD.a_M1_201709040000_202109031210.csv" #Data File - adjust per the relevant file
+start_date = datetime.datetime(2021, 11, 1, tzinfo = tz) #Start Date - adjust as necessary
+end_date = datetime.datetime(2021, 12, 1, tzinfo = tz) #End Date - adjust as necessary
+data_folder = os.path.join(os.getcwd(), "Datasets", "CombinedDatasets")
+data_filename = "EURUSD.a_M5_14102021_02092022.csv" #Data File - adjust per the relevant file
 currency = data_filename.split("_")[0] #Infer Currency from Data File
 frequency_str = data_filename.split("_")[1] #Infer Frequency from Data File
 timeCol = 'DATETIME'
 timeCols = ['<DATE>', '<TIME>']
 
-# model_folder = "C:\\Users\\Patrick\\Documents\\UNI - USYD\\2022 - Capstone\\Python Backtesting System\\github versions\\Live\\Python-Backtesting-vPM\\DL Models"
-# model_filename = "RNN_predictor 04-09-2022 14-17-37.h5"
+# model_folder = os.path.join(os.getcwd(), "DLModels", "Predictor Models")
+# model_filename = "LSTM_predictor 11-09-2022 10-24-26.h5"
 # model_loc = os.path.join(model_folder, model_filename)
-# scaler_filename = "RNN_predictor_scaler.save"
+# scaler_filename = "LSTM_predictor_scaler.save"
 # scaler_loc = os.path.join(model_folder, scaler_filename)
 # model = keras.models.load_model(model_loc)
 # scaler = joblib.load(scaler_loc)
@@ -53,13 +53,13 @@ timeCols = ['<DATE>', '<TIME>']
 data_file = os.path.join(data_folder, data_filename).replace('\\', '/')
 
 #Read data and handle dates
-#full_data = pd.read_csv(data_file, parse_dates = [timeCol])
+full_data = pd.read_csv(data_file, parse_dates = [timeCol])
 
 #Work with MT5 Symbols dataset
-full_data = pd.read_csv(data_file, sep = "\t", parse_dates = [timeCols])
-for oldCol in full_data.columns:
-    full_data.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '')}, inplace = True)
-full_data.drop(columns = ['TICKVOL', 'VOL', 'SPREAD'], inplace = True)
+# full_data = pd.read_csv(data_file, sep = "\t", parse_dates = [timeCols])
+# for oldCol in full_data.columns:
+#     full_data.rename(columns = {oldCol: oldCol.replace('<', '').replace('>', '').replace('_', '')}, inplace = True)
+# full_data.drop(columns = ['TICKVOL', 'VOL', 'SPREAD'], inplace = True)
 
 #Handle inputs to strategies
 if 'ReplacedBidAsk' in full_data.columns:
@@ -75,17 +75,17 @@ timeCol = 'time'
 full_data[timeCol] = full_data[timeCol].dt.tz_localize(tz = tz)
 
 ############# Hyperparameters #############
-input_row_size = 50         # <----- Minimum number of inputs required by YOUR trading strategy
+input_row_size = 120         # <----- Minimum number of inputs required by YOUR trading strategy
 one_pip = 0.0001            # <----- Indicating the value of 1 pip, i.e. usually 0.0001 for all major fx except for JPY pairs (0.01)
-#stop_loss = -25*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
-#take_profit = 50*one_pip    # <----- For example. If we holding a buy position and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
+stop_loss = -20*one_pip     # <----- (THIS WILL CHANGE!!, if the code recieves opposite signal than previously executed order then the position will be closed. 
+take_profit = 20*one_pip    # <----- For example. If we holding a buy position and sell signal received (labeled as buyy_sell in signalHandler.py) then the position will be closed. 
 guaranteed_sl = False       # Whether guaranteed stop loss/take profit is in place -> effects signalHandler.bandpl 
 broker_cost = 2*one_pip     # Total cost flat for entering/exiting trade (ie captured once). Consider using higher value if guaranteed_sl is true - in reality guaranteed SL/TP are expensive
 inputs = deque(maxlen=input_row_size)
 
 #MAPPING
-stop_loss = -2000
-take_profit = 1000
+#stop_loss = -2000
+#take_profit = 1000
 
 ############# BACKTESTING #############
 
@@ -100,7 +100,9 @@ start_date = data[timeCol].iloc[input_row_size]
 end_date = data[timeCol].iloc[-1]
 
 #Instantiate Broker
-broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, start_date, end_date, 1)
+broker = signalHandler(stop_loss, take_profit, guaranteed_sl, broker_cost, data, currency, frequency_str, start_date, end_date, 0)
+#strategy = patrick_predictiveDL.predictiveModel(model, scaler)
+strategyClass = parabolic_SAR.pSAR
 
 #Some Initialization
 start_time = time.time() 
@@ -122,14 +124,14 @@ for _,row in data.iterrows():
     if len(inputs) == input_row_size:
 
         #Vanilla indicator strategies
-        strategy = three_rsp.ThreeRSP(pd.DataFrame(inputs))
-        signal, indicatorDf = strategy.run_3RSP() #And call respective strategy run function. NB now returns indicatorDF too.
+        strategy = strategyClass()
+        signal, indicatorDf = strategy.run(pd.DataFrame(inputs)) #And call respective strategy run function. NB now returns indicatorDF too.
         broker.storeSignalAndIndicators(signal, indicatorDf, index)
 
         #DL Strategies
-        # strategy = patrick_predictiveDL.predictiveModel(pd.DataFrame(inputs), model, scaler) #Change loaded strategy        
-        # signal = strategy.run_predictiveDL() #And call respective strategy run function. 
-        # broker.storeSignalAndIndicators(signal, None, index)
+        #strategy.feed_input_data(pd.DataFrame(inputs))  #Input data
+        #signal = strategy.run_predictiveDL() #And call respective strategy run function. 
+        #broker.storeSignalAndIndicators(signal, None, index)
 
         # Current Price
         current_price = row['close']
