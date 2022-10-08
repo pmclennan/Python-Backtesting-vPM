@@ -18,7 +18,7 @@ class ZigZagABCD:
         self.ZigZagObject.readPrelimData(prelimData, startDate)
 
     def addIndicators(self, data):
-        self.indicatorDF = self.ZigZagDat[['time', 'ZigZag Value', 'ZigZag Type']].iloc[-len(data)-1:-1].reset_index(drop = True)
+        self.indicatorDF = self.ZigZagDat[['time', 'ZigZag Value', 'ZigZag Type']].iloc[-len(data):].reset_index(drop = True)
 
     def run(self, data):        
         self.ZigZagDat = self.ZigZagObject.run(data, 1)
