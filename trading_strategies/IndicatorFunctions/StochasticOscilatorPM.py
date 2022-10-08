@@ -1,8 +1,5 @@
 import pandas as pd
 import numpy as np
-import pytz
-import datetime
-import os
 
 def StochasticOscilator(fullData, K = 14, D = 3, slowing = 3):
 
