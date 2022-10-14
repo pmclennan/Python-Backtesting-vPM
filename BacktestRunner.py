@@ -41,6 +41,13 @@ class BacktestRunner:
         self.strategy = strategy
         self.storeIndicators = storeIndicators
 
+    def inputDataAndInfo(self, data, currency, frequency):
+        self.data = data        
+        self.startDate = self.data['time'].iloc[self.inputRowSize]
+        self.endDate = self.data['time'].iloc[-1]       
+        self.currency = currency
+        self.frequencyStr = frequency
+    
     def readAndPrepData(self, dataDir, delimitter, timeCols):
         #I prefer to have the functionality of reading the data here, so we can infer report items (currency, timeframe)
         #etc from the filename. 
@@ -98,14 +105,14 @@ class BacktestRunner:
         Types:
         1 - standard indicator strategy. Returns indicator DF.
         2 - Deep Learning - requires model/scaler upon instantiation before input into backtest (otherwise timely)
-        3 - ZigZag - requires preliminary data upon instantiation before input into backtest. New data is loaded in "Run"
+        3 - ZigZag - requires preliminary data upon instantiation before input into backtest. Returns IndicatorDF
         '''
         startTime = time.time()
         index = 0
         signal = 0
 
-        if (runType == 2 or runType == 3) and self.storeIndicators == 1:
-            print("Note: Indicators can't be saved with history for runType 2 (DL) or 3 (Charting at this stage) - Overriding this setting.")
+        if runType == 2 and self.storeIndicators == 1:
+            print("Note: Indicators can't be saved with history for runType 2 (DL) - Overriding this setting.")
             self.storeIndicators = 0
             self.broker.storeIndicators = 0 #Yes I know this should be a setter method
 
@@ -129,8 +136,8 @@ class BacktestRunner:
                     self.broker.storeSignalAndIndicators(signal, None, index)          
                 
                 elif runType == 3:
-                    signal = self.strategy.run(pd.DataFrame(self.inputs))
-                    self.broker.storeSignalAndIndicators(signal, None, index)          
+                    signal, indicatorDf = self.strategy.run(pd.DataFrame(self.inputs))
+                    self.broker.storeSignalAndIndicators(signal, indicatorDf, index)          
 
                 currentPrice = row['close']
 
@@ -151,8 +158,6 @@ class BacktestRunner:
                 else:
                     raise Exception ("Unknown Signal!")
 
-                self.broker.store_executed_price(bidPrice, askPrice, index)
-
             index += 1
 
             #Show progress
@@ -171,8 +176,8 @@ class BacktestRunner:
             self.currency, self.frequencyStr, self.startDate.date(), self.endDate.date()))
         if suffix is not None:
             childDir = childDir + "_" + str(suffix)
-        if hasattr(self.strategy(), 'Name'):
-            childDir = self.strategy().Name + "_" + childDir
+        if hasattr(self.strategy, 'Name'):
+            childDir = self.strategy.Name + "_" + childDir
 
         subfolder = os.path.join(self.exportParentFolder, childDir)
         os.mkdir(subfolder)
