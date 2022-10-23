@@ -1,0 +1,23 @@
+LSTM_BOMapping
+Architecture Info
+Model: "sequential_11"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_9 (LSTM)               (None, 60)                16800     
+                                                                 
+ dense_33 (Dense)            (None, 30)                1830      
+                                                                 
+ dropout_11 (Dropout)        (None, 30)                0         
+                                                                 
+ dense_34 (Dense)            (None, 10)                310       
+                                                                 
+ dense_35 (Dense)            (None, 3)                 33        
+                                                                 
+=================================================================
+Total params: 18,973
+Trainable params: 18,973
+Non-trainable params: 0
+_________________________________________________________________
+Accuracy (%): 44.61
+Time Trained: 3452.0s
